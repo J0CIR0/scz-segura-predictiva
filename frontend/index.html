@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCZ Segura Predictiva</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="header">
+        <h1>SCZ Segura Predictiva</h1>
+        <p>Sistema de seguridad ciudadana</p>
+    </div>
+    
+    <div class="container">
+        <div id="message" class="message"></div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('registro')">Registro</div>
+            <div class="tab" onclick="switchTab('login')">Login</div>
+            <div class="tab" onclick="switchTab('recuperar')">Recuperar Contraseña</div>
+        </div>
+        
+        <div id="registro" class="tab-content active">
+            <div class="form-container">
+                <h2>Registro de Usuario</h2>
+                <form id="registroForm">
+                    <div class="form-group">
+                        <label>CI:</label>
+                        <input type="text" id="reg_ci" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre:</label>
+                        <input type="text" id="reg_nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido:</label>
+                        <input type="text" id="reg_apellido" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="reg_email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono:</label>
+                        <input type="text" id="reg_telefono" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña:</label>
+                        <input type="password" id="reg_contrasena" required>
+                    </div>
+                    <button type="submit">Registrarse</button>
+                </form>
+            </div>
+            
+            <div class="form-container">
+                <h2>Verificar Código</h2>
+                <form id="verificarForm">
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="ver_email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Código de Verificación:</label>
+                        <input type="text" id="ver_codigo" required>
+                    </div>
+                    <button type="submit">Verificar Cuenta</button>
+                </form>
+            </div>
+        </div>
+        
+        <div id="login" class="tab-content">
+            <div class="form-container">
+                <h2>Iniciar Sesión</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="login_email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña:</label>
+                        <input type="password" id="login_contrasena" required>
+                    </div>
+                    <button type="submit">Ingresar</button>
+                </form>
+            </div>
+        </div>
+        
+        <div id="recuperar" class="tab-content">
+            <div class="form-container">
+                <h2>Solicitar Recuperación</h2>
+                <form id="solicitarRecuperacionForm">
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="rec_email" required>
+                    </div>
+                    <button type="submit">Enviar Código</button>
+                </form>
+            </div>
+            
+            <div class="form-container">
+                <h2>Cambiar Contraseña</h2>
+                <form id="cambiarContrasenaForm">
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="cambio_email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Código de Recuperación:</label>
+                        <input type="text" id="cambio_codigo" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nueva Contraseña:</label>
+                        <input type="password" id="cambio_contrasena" required>
+                    </div>
+                    <button type="submit">Cambiar Contraseña</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
