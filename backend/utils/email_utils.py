@@ -25,3 +25,5 @@ class EmailService:
         server.login(self.smtp_email, self.smtp_password)
         server.send_message(msg)
         server.quit()
+
+email_service = EmailService()

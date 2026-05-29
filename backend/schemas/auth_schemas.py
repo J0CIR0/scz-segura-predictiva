@@ -1,25 +1,17 @@
 from pydantic import BaseModel, EmailStr
 
-class RegistroUsuario(BaseModel):
+class registro_usuario(BaseModel):
     ci: str
     nombre: str
     apellido: str
     email: EmailStr
     telefono: str
-    contrasena: str
+    password: str
 
-class LoginUsuario(BaseModel):
+class login_usuario(BaseModel):
     email: EmailStr
-    contrasena: str
+    password: str
 
-class VerificarCodigo(BaseModel):
-    email: EmailStr
-    codigo: str
-
-class SolicitarRecuperacion(BaseModel):
-    email: EmailStr
-
-class CambioContrasena(BaseModel):
+class verificar_codigo(BaseModel):
     email: EmailStr
     codigo: str
-    nueva_contrasena: str

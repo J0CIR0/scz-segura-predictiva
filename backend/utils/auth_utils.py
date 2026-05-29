@@ -13,10 +13,10 @@ class AuthService:
         self.secret_key = os.getenv("SECRET_KEY")
         self.algorithm = "HS256"
     
-    def hash_password(self, password: str) -> str:
+    def hash_pass(self, password: str) -> str:
         return self.pwd_context.hash(password)
     
-    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+    def verify_pass(self, plain_password: str, hashed_password: str) -> bool:
         return self.pwd_context.verify(plain_password, hashed_password)
     
     def create_token(self, data: dict):
@@ -31,6 +31,6 @@ class AuthService:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             return payload
         except:
-            raise HTTPException(status_code=401, detail="Token invalido")
+            raise HTTPException(status_code=401, detail="token invalido")
 
 auth_service = AuthService()
