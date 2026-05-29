@@ -11,7 +11,7 @@ async function reportarIncidente(event) {
     const longitud = parseFloat(document.getElementById('longitud').value);
     
     if (isNaN(latitud) || isNaN(longitud)) {
-        showMessage('Debes seleccionar una ubicacion en el mapa o usar tu ubicacion actual', 'error');
+        showMessage('Debes seleccionar una ubicacion en el mapa', 'error');
         return;
     }
     
@@ -52,8 +52,10 @@ async function reportarIncidente(event) {
             document.getElementById('reporteForm').reset();
             document.getElementById('preview_imagenes').innerHTML = '';
             document.getElementById('coordenadas_info').innerHTML = '';
-            if (marcador) {
-                marcador.setMap(null);
+            document.getElementById('latitud').value = '';
+            document.getElementById('longitud').value = '';
+            if (marcadorLeaflet) {
+                marcadorLeaflet.setMap(null);
             }
         } else {
             showMessage(result.detail, 'error');
@@ -114,3 +116,19 @@ async function cargarIncidentes() {
         showMessage('Error al cargar incidentes', 'error');
     }
 }
+
+document.getElementById('imagenes').addEventListener('change', function(e) {
+    const preview = document.getElementById('preview_imagenes');
+    preview.innerHTML = '';
+    const files = e.target.files;
+    
+    for (let i = 0; i < files.length; i++) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = document.createElement('img');
+            img.src = event.target.result;
+            preview.appendChild(img);
+        };
+        reader.readAsDataURL(files[i]);
+    }
+});
