@@ -25,19 +25,23 @@ def reportar_incidente(
     token_data: dict = Depends(security)
 ):
     usuario_id = token_data.get("id")
+    if not usuario_id:
+        raise HTTPException(status_code=401, detail="Token invalido")
+    
     ip_address = request.client.host
     user_agent = request.headers.get("user-agent")
     
     conn = db.get_connection()
     cursor = conn.cursor()
     
+    imagenes_json = json.dumps(incidente.imagenes) if incidente.imagenes else None
+    
     cursor.execute("""
         insert into incidentes (usuario_id, tipo_delito, descripcion, latitud, longitud, direccion, imagenes, ip_address)
         values (%s, %s, %s, %s, %s, %s, %s, %s)
     """, (usuario_id, incidente.tipo_delito, incidente.descripcion, 
           incidente.latitud, incidente.longitud, incidente.direccion,
-          json.dumps(incidente.imagenes) if incidente.imagenes else None,
-          ip_address))
+          imagenes_json, ip_address))
     
     conn.commit()
     incidente_id = cursor.lastrowid
@@ -59,6 +63,10 @@ def reportar_incidente(
 
 @router.get("/incidentes", response_model=List[incidente_response])
 def listar_incidentes(token_data: dict = Depends(security)):
+    usuario_id = token_data.get("id")
+    if not usuario_id:
+        raise HTTPException(status_code=401, detail="Token invalido")
+    
     conn = db.get_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -78,23 +86,29 @@ def listar_incidentes(token_data: dict = Depends(security)):
     conn.close()
     
     for inc in incidentes:
-        if inc.get("imagenes"):
+        if inc.get("imagenes") and inc["imagenes"]:
             try:
                 inc["imagenes"] = json.loads(inc["imagenes"])
             except:
-                pass
+                inc["imagenes"] = []
+        else:
+            inc["imagenes"] = []
     
     return incidentes
 
 @router.get("/incidentes-cercanos")
 def incidentes_cercanos(lat: float, lon: float, radio_km: float = 1, token_data: dict = Depends(security)):
+    usuario_id = token_data.get("id")
+    if not usuario_id:
+        raise HTTPException(status_code=401, detail="Token invalido")
+    
     conn = db.get_connection()
     cursor = conn.cursor(dictionary=True)
     
     cursor.execute("""
         select id, tipo_delito, descripcion, latitud, longitud, direccion, creado_en
         from incidentes
-        where estado = 'validado'
+        where estado = 'pendiente'
         order by creado_en desc
         limit 100
     """)
@@ -115,6 +129,8 @@ def incidentes_cercanos(lat: float, lon: float, radio_km: float = 1, token_data:
 @router.get("/mis-incidentes", response_model=List[incidente_response])
 def mis_incidentes(token_data: dict = Depends(security)):
     usuario_id = token_data.get("id")
+    if not usuario_id:
+        raise HTTPException(status_code=401, detail="Token invalido")
     
     conn = db.get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -131,5 +147,14 @@ def mis_incidentes(token_data: dict = Depends(security)):
     incidentes = cursor.fetchall()
     cursor.close()
     conn.close()
+    
+    for inc in incidentes:
+        if inc.get("imagenes") and inc["imagenes"]:
+            try:
+                inc["imagenes"] = json.loads(inc["imagenes"])
+            except:
+                inc["imagenes"] = []
+        else:
+            inc["imagenes"] = []
     
     return incidentes
