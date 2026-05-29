@@ -19,8 +19,16 @@ function switchTab(tabName) {
     event.target.classList.add('active');
     
     if (tabName === 'incidentes') {
-        if (typeof cargarIncidentes === 'function') {
-            cargarIncidentes();
-        }
+        cargarIncidentes();
+    }
+    
+    if (tabName === 'reportar') {
+        setTimeout(function() {
+            if (mapaLeaflet) {
+                mapaLeaflet.invalidateSize();
+            } else {
+                inicializarMapa();
+            }
+        }, 100);
     }
 }
