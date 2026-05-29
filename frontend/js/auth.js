@@ -10,7 +10,7 @@ async function registrarUsuario(event) {
     };
     
     try {
-        const response = await fetch(`${API_URL}/registro`, {
+        const response = await fetch('/api/registro', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
@@ -35,7 +35,7 @@ async function verificarCodigo(event) {
     };
     
     try {
-        const response = await fetch(`${API_URL}/verificar-codigo`, {
+        const response = await fetch('/api/verificar-codigo', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
@@ -60,7 +60,7 @@ async function loginUsuario(event) {
     };
     
     try {
-        const response = await fetch(`${API_URL}/login`, {
+        const response = await fetch('/api/login', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
@@ -68,62 +68,12 @@ async function loginUsuario(event) {
         const result = await response.json();
         if (response.ok) {
             localStorage.setItem('token', result.access_token);
-            showMessage('Login exitoso', 'success');
+            showMessage('Login exitoso. Bienvenido ' + result.rol, 'success');
             document.getElementById('loginForm').reset();
         } else {
             showMessage(result.detail, 'error');
         }
     } catch (error) {
         showMessage('Error en el login', 'error');
-    }
-}
-
-async function solicitarRecuperacion(event) {
-    event.preventDefault();
-    const data = {
-        email: document.getElementById('rec_email').value
-    };
-    
-    try {
-        const response = await fetch(`${API_URL}/solicitar-recuperacion`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
-        const result = await response.json();
-        if (response.ok) {
-            showMessage(result.mensaje, 'success');
-            document.getElementById('solicitarRecuperacionForm').reset();
-        } else {
-            showMessage(result.detail, 'error');
-        }
-    } catch (error) {
-        showMessage('Error al solicitar recuperacion', 'error');
-    }
-}
-
-async function cambiarContrasena(event) {
-    event.preventDefault();
-    const data = {
-        email: document.getElementById('cambio_email').value,
-        codigo: document.getElementById('cambio_codigo').value,
-        nueva_password: document.getElementById('cambio_contrasena').value
-    };
-    
-    try {
-        const response = await fetch(`${API_URL}/cambiar-contrasena`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
-        const result = await response.json();
-        if (response.ok) {
-            showMessage(result.mensaje, 'success');
-            document.getElementById('cambiarContrasenaForm').reset();
-        } else {
-            showMessage(result.detail, 'error');
-        }
-    } catch (error) {
-        showMessage('Error al cambiar contrasena', 'error');
     }
 }

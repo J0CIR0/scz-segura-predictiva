@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class reporte_incidente(BaseModel):
@@ -8,6 +8,7 @@ class reporte_incidente(BaseModel):
     latitud: float
     longitud: float
     direccion: str
+    imagenes: Optional[List[str]] = None
 
 class incidente_response(BaseModel):
     id: int
@@ -17,6 +18,8 @@ class incidente_response(BaseModel):
     latitud: float
     longitud: float
     direccion: str
+    imagenes: Optional[str]
+    ubicacion_valida: bool
     estado: str
     creado_en: datetime
     vecino_nombre: Optional[str] = None
