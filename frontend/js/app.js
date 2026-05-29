@@ -10,4 +10,16 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('loginForm')) {
         document.getElementById('loginForm').addEventListener('submit', loginUsuario);
     }
+    
+    if (document.getElementById('solicitarRecuperacionForm')) {
+        document.getElementById('solicitarRecuperacionForm').addEventListener('submit', solicitarRecuperacion);
+    }
+    
+    if (document.getElementById('cambiarContrasenaForm')) {
+        document.getElementById('cambiarContrasenaForm').addEventListener('submit', cambiarContrasena);
+    }
+    
+    if (document.getElementById('reporteForm')) {
+        document.getElementById('reporteForm').addEventListener('submit', reportarIncidente);
+    }
 });
