@@ -1,6 +1,6 @@
-let mapaLeaflet;
-let marcadorLeaflet;
-let heatLayer;
+let mapaLeaflet = null;
+let marcadorLeaflet = null;
+let heatLayer = null;
 
 function showMessage(text, type) {
     const msgDiv = document.getElementById('message');
@@ -22,6 +22,7 @@ function mostrarPagina(paginaId) {
         setTimeout(() => {
             if (mapaLeaflet) {
                 mapaLeaflet.invalidateSize();
+                cargarHeatMap();
             } else {
                 inicializarMapa();
             }
@@ -59,7 +60,7 @@ function cerrarSesion() {
     localStorage.removeItem('userName');
     actualizarUIporSesion();
     mostrarPagina('mapa');
-    showMessage('Sesión cerrada', 'success');
+    showMessage('Sesion cerrada', 'success');
 }
 
 function cerrarModal() {
@@ -71,15 +72,17 @@ function mostrarDetalleIncidente(incidente) {
     const contenido = document.getElementById('modal-contenido');
     
     let imagenesHtml = '';
-    if (incidente.imagenes && incidente.imagenes.length > 0) {
-        if (Array.isArray(incidente.imagenes)) {
+    if (incidente.imagenes) {
+        if (Array.isArray(incidente.imagenes) && incidente.imagenes.length > 0) {
             incidente.imagenes.forEach(img => {
                 imagenesHtml += `<img src="${img}" style="width:100%;margin-bottom:10px;border-radius:5px;">`;
             });
-        } else if (typeof incidente.imagenes === 'string') {
+        } else if (typeof incidente.imagenes === 'string' && incidente.imagenes.length > 0) {
             imagenesHtml = `<img src="${incidente.imagenes}" style="width:100%;border-radius:5px;">`;
         }
     }
+    
+    const fecha = new Date(incidente.creado_en).toLocaleString();
     
     contenido.innerHTML = `
         <h3>${incidente.tipo_delito.toUpperCase()}</h3>
@@ -88,7 +91,7 @@ function mostrarDetalleIncidente(incidente) {
         <p><strong>Coordenadas:</strong> ${incidente.latitud}, ${incidente.longitud}</p>
         <p><strong>Reportado por:</strong> ${incidente.vecino_nombre || 'Vecino'} ${incidente.vecino_apellido || ''}</p>
         <p><strong>Estado:</strong> ${incidente.estado}</p>
-        <p><strong>Fecha:</strong> ${new Date(incidente.creado_en).toLocaleString()}</p>
+        <p><strong>Fecha:</strong> ${fecha}</p>
         ${imagenesHtml}
     `;
     

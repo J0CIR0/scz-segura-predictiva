@@ -3,7 +3,7 @@ async function reportarIncidente(event) {
     
     const token = localStorage.getItem('token');
     if (!token) {
-        showMessage('Debes iniciar sesión', 'error');
+        showMessage('Debes iniciar sesion', 'error');
         return;
     }
     
@@ -11,7 +11,7 @@ async function reportarIncidente(event) {
     const longitud = parseFloat(document.getElementById('longitud').value);
     
     if (isNaN(latitud) || isNaN(longitud)) {
-        showMessage('Selecciona una ubicación en el mapa', 'error');
+        showMessage('Selecciona una ubicacion en el mapa', 'error');
         return;
     }
     
@@ -60,6 +60,7 @@ async function reportarIncidente(event) {
             }
             cargarHeatMap();
             cargarIncidentesPreview();
+            mostrarPagina('mapa');
         } else {
             showMessage(result.detail, 'error');
         }
@@ -84,16 +85,11 @@ async function cargarIncidentesPreview() {
         
         incidentes.slice(0, 6).forEach(inc => {
             let imagenHtml = '';
-            if (inc.imagenes && inc.imagenes.length > 0) {
-                try {
-                    const imagenes = JSON.parse(inc.imagenes);
-                    if (imagenes.length > 0) {
-                        imagenHtml = `<img src="${imagenes[0]}" class="incidente-imagen">`;
-                    }
-                } catch(e) {
-                    if (typeof inc.imagenes === 'string' && inc.imagenes.startsWith('data:image')) {
-                        imagenHtml = `<img src="${inc.imagenes}" class="incidente-imagen">`;
-                    }
+            if (inc.imagenes) {
+                if (Array.isArray(inc.imagenes) && inc.imagenes.length > 0) {
+                    imagenHtml = `<img src="${inc.imagenes[0]}" class="incidente-imagen">`;
+                } else if (typeof inc.imagenes === 'string' && inc.imagenes.length > 0) {
+                    imagenHtml = `<img src="${inc.imagenes}" class="incidente-imagen">`;
                 }
             }
             
@@ -129,16 +125,11 @@ async function cargarTodosIncidentes() {
         
         incidentes.forEach(inc => {
             let imagenHtml = '';
-            if (inc.imagenes && inc.imagenes.length > 0) {
-                try {
-                    const imagenes = JSON.parse(inc.imagenes);
-                    if (imagenes.length > 0) {
-                        imagenHtml = `<img src="${imagenes[0]}" class="incidente-imagen">`;
-                    }
-                } catch(e) {
-                    if (typeof inc.imagenes === 'string' && inc.imagenes.startsWith('data:image')) {
-                        imagenHtml = `<img src="${inc.imagenes}" class="incidente-imagen">`;
-                    }
+            if (inc.imagenes) {
+                if (Array.isArray(inc.imagenes) && inc.imagenes.length > 0) {
+                    imagenHtml = `<img src="${inc.imagenes[0]}" class="incidente-imagen">`;
+                } else if (typeof inc.imagenes === 'string' && inc.imagenes.length > 0) {
+                    imagenHtml = `<img src="${inc.imagenes}" class="incidente-imagen">`;
                 }
             }
             
@@ -181,16 +172,11 @@ async function cargarMisIncidentes() {
         
         incidentes.forEach(inc => {
             let imagenHtml = '';
-            if (inc.imagenes && inc.imagenes.length > 0) {
-                try {
-                    const imagenes = JSON.parse(inc.imagenes);
-                    if (imagenes.length > 0) {
-                        imagenHtml = `<img src="${imagenes[0]}" class="incidente-imagen">`;
-                    }
-                } catch(e) {
-                    if (typeof inc.imagenes === 'string' && inc.imagenes.startsWith('data:image')) {
-                        imagenHtml = `<img src="${inc.imagenes}" class="incidente-imagen">`;
-                    }
+            if (inc.imagenes) {
+                if (Array.isArray(inc.imagenes) && inc.imagenes.length > 0) {
+                    imagenHtml = `<img src="${inc.imagenes[0]}" class="incidente-imagen">`;
+                } else if (typeof inc.imagenes === 'string' && inc.imagenes.length > 0) {
+                    imagenHtml = `<img src="${inc.imagenes}" class="incidente-imagen">`;
                 }
             }
             

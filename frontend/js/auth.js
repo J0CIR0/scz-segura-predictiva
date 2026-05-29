@@ -48,7 +48,7 @@ async function verificarCodigo(event) {
             showMessage(result.detail, 'error');
         }
     } catch (error) {
-        showMessage('Error en la verificación', 'error');
+        showMessage('Error en la verificacion', 'error');
     }
 }
 
@@ -70,6 +70,7 @@ async function loginUsuario(event) {
             localStorage.setItem('token', result.access_token);
             localStorage.setItem('userName', data.email.split('@')[0]);
             actualizarUIporSesion();
+            mostrarPagina('mapa');
             showMessage('Bienvenido', 'success');
             document.getElementById('loginForm').reset();
         } else {

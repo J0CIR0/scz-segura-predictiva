@@ -1,7 +1,3 @@
-let mapaLeaflet;
-let marcadorLeaflet;
-let heatLayer;
-
 function inicializarMapa() {
     const centroSantaCruz = [-17.783333, -63.183333];
 
@@ -30,7 +26,13 @@ async function cargarHeatMap() {
         const data = await response.json();
         const incidentes = data.incidentes || [];
         
-        const heatData = incidentes.map(inc => [inc.latitud, inc.longitud, 1]);
+        const heatData = [];
+        
+        incidentes.forEach(inc => {
+            if (inc.latitud && inc.longitud) {
+                heatData.push([inc.latitud, inc.longitud, 1]);
+            }
+        });
         
         if (heatLayer) {
             mapaLeaflet.removeLayer(heatLayer);
@@ -75,37 +77,34 @@ function actualizarCoordenadas(lat, lng) {
 
 function obtenerUbicacionActual() {
     if (!navigator.geolocation) {
-        showMessage("Geolocalización no soportada", "error");
+        showMessage('Geolocalizacion no soportada', 'error');
         return;
     }
 
-    showMessage("Obteniendo ubicación...", "success");
+    showMessage('Obteniendo ubicacion...', 'success');
 
     navigator.geolocation.getCurrentPosition(function(position) {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         actualizarCoordenadas(lat, lng);
-        showMessage("Ubicación obtenida", "success");
+        showMessage('Ubicacion obtenida', 'success');
     }, function(error) {
-        let mensaje = "Error al obtener ubicación";
-        showMessage(mensaje, "error");
+        showMessage('Error al obtener ubicacion', 'error');
     });
 }
 
-if (document.getElementById('imagenes')) {
-    document.getElementById('imagenes').addEventListener('change', function(e) {
-        const preview = document.getElementById('preview_imagenes');
-        preview.innerHTML = '';
-        const files = e.target.files;
-        
-        for (let i = 0; i < files.length; i++) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const img = document.createElement('img');
-                img.src = event.target.result;
-                preview.appendChild(img);
-            };
-            reader.readAsDataURL(files[i]);
-        }
-    });
-}
+document.getElementById('imagenes').addEventListener('change', function(e) {
+    const preview = document.getElementById('preview_imagenes');
+    preview.innerHTML = '';
+    const files = e.target.files;
+    
+    for (let i = 0; i < files.length; i++) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = document.createElement('img');
+            img.src = event.target.result;
+            preview.appendChild(img);
+        };
+        reader.readAsDataURL(files[i]);
+    }
+});

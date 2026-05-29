@@ -86,11 +86,12 @@ def listar_incidentes(current_user: dict = Depends(auth_service.get_current_user
             try:
                 inc["imagenes"] = json.loads(inc["imagenes"])
             except:
-                inc["imagenes"] = []
+                inc["imagenes"] = inc["imagenes"]
         else:
             inc["imagenes"] = []
     
     return {"incidentes": incidentes}
+
 @router.get("/incidentes-publicos")
 def listar_incidentes_publicos():
     conn = db.get_connection()
@@ -122,3 +123,36 @@ def listar_incidentes_publicos():
             inc["imagenes"] = []
     
     return {"incidentes": incidentes}
+
+@router.get("/mis-incidentes")
+def mis_incidentes(current_user: dict = Depends(auth_service.get_current_user)):
+    usuario_id = current_user.get("id")
+    if not usuario_id:
+        raise HTTPException(status_code=401, detail="usuario no autenticado")
+    
+    conn = db.get_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("""
+        select id, usuario_id, tipo_delito, descripcion, 
+               latitud, longitud, direccion, imagenes, ubicacion_valida,
+               estado, creado_en
+        from incidentes
+        where usuario_id = %s
+        order by creado_en desc
+    """, (usuario_id,))
+    
+    incidentes = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    for inc in incidentes:
+        if inc.get("imagenes") and inc["imagenes"]:
+            try:
+                inc["imagenes"] = json.loads(inc["imagenes"])
+            except:
+                inc["imagenes"] = inc["imagenes"]
+        else:
+            inc["imagenes"] = []
+    
+    return incidentes

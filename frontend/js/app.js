@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     actualizarUIporSesion();
     
     if (document.getElementById('mapa')) {
-        setTimeout(() => {
+        setTimeout(function() {
             inicializarMapa();
             cargarIncidentesPreview();
         }, 500);
