@@ -42,5 +42,3 @@ Plataforma web que permite:
 - Git
 - MySQL Workbench
 - Ngrok (para pruebas)
-
-## Estructura del Proyecto
