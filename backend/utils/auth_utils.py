@@ -25,7 +25,7 @@ class AuthService:
         to_encode.update({"exp": expire})
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
     
-    def verify_token(self, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    def get_current_user(self, credentials: HTTPAuthorizationCredentials = Depends(security)):
         token = credentials.credentials
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])

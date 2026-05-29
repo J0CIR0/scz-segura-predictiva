@@ -1,30 +1,65 @@
-.tabs {
+.navbar {
+    background-color: #ffffff;
+    border-bottom: 2px solid #004d00;
+    padding: 10px 20px;
     display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 99;
+}
+
+.nav-links {
+    display: flex;
+    gap: 15px;
     flex-wrap: wrap;
 }
 
-.tab {
-    background-color: #f5f5f5;
+.nav-links button {
+    background: none;
+    border: none;
     color: #004d00;
-    padding: 10px 20px;
-    border: 1px solid #004d00;
     cursor: pointer;
-    flex: 1;
-    text-align: center;
+    font-size: 16px;
+    padding: 8px 16px;
+    border-radius: 5px;
+    transition: all 0.3s;
+    width: auto;
 }
 
-.tab.active {
+.nav-links button:hover {
     background-color: #004d00;
     color: white;
 }
 
-.tab-content {
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.logout-btn {
+    background-color: #dc3545;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: auto;
+}
+
+.logout-btn:hover {
+    background-color: #c82333;
+}
+
+.page {
     display: none;
 }
 
-.tab-content.active {
+.page.active {
     display: block;
 }
 
@@ -33,6 +68,11 @@
     margin-bottom: 15px;
     border-radius: 5px;
     display: none;
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 300px;
 }
 
 .message.success {
@@ -48,7 +88,20 @@
 }
 
 @media (max-width: 768px) {
-    .tabs {
+    .navbar {
         flex-direction: column;
+        text-align: center;
+    }
+    
+    .nav-links {
+        justify-content: center;
+    }
+    
+    .message {
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+        left: 20px;
+        max-width: none;
     }
 }

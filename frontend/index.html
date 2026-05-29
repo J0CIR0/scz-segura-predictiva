@@ -7,9 +7,10 @@
     <link rel="stylesheet" href="/static/css/base.css">
     <link rel="stylesheet" href="/static/css/components.css">
     <link rel="stylesheet" href="/static/css/auth.css">
-    <link rel="stylesheet" href="/static/css/incidentes.css">
+    <link rel="stylesheet" href="/static/css/mapa.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 </head>
 <body>
     <div class="header">
@@ -17,18 +18,123 @@
         <p>Santa Cruz - Bolivia</p>
     </div>
     
+    <div id="message" class="message"></div>
+    
+    <div id="auth-nav" class="navbar" style="display: none;">
+        <div class="user-info">
+            <span>Bienvenido, <span id="user-name">Vecino</span></span>
+            <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+        <div class="nav-links">
+            <button onclick="mostrarPagina('mapa')">Mapa de Calor</button>
+            <button onclick="mostrarPagina('incidentes')">Incidentes</button>
+            <button onclick="mostrarPagina('reportar')">Reportar</button>
+            <button onclick="mostrarPagina('mis-reportes')">Mis Reportes</button>
+        </div>
+    </div>
+    
+    <div id="public-nav" class="navbar" style="display: flex;">
+        <div class="nav-links">
+            <button onclick="mostrarPagina('mapa')">Mapa de Calor</button>
+            <button onclick="mostrarPagina('incidentes')">Incidentes</button>
+            <button onclick="mostrarPagina('login')">Iniciar Sesión</button>
+            <button onclick="mostrarPagina('registro')">Registrarse</button>
+        </div>
+    </div>
+    
     <div class="container">
-        <div id="message" class="message"></div>
-        
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('registro')">Registro</div>
-            <div class="tab" onclick="switchTab('login')">Login</div>
-            <div class="tab" onclick="switchTab('reportar')">Reportar Incidente</div>
-            <div class="tab" onclick="switchTab('incidentes')">Ver Incidentes</div>
-            <div class="tab" onclick="switchTab('recuperar')">Recuperar Contraseña</div>
+        <div id="pagina-mapa" class="page active">
+            <h2>Mapa de Calor de Incidentes</h2>
+            <div class="heatmap-control">
+                <div class="heatmap-legend">
+                    <div><span class="legend-color legend-rojo"></span> Alto</div>
+                    <div><span class="legend-color legend-naranja"></span> Medio-Alto</div>
+                    <div><span class="legend-color legend-amarillo"></span> Medio</div>
+                    <div><span class="legend-color legend-verde"></span> Bajo</div>
+                </div>
+            </div>
+            <div id="mapa" class="mapa-container"></div>
+            <h3>Incidentes Recientes</h3>
+            <div id="incidentes-preview" class="incidentes-lista"></div>
         </div>
         
-        <div id="registro" class="tab-content active">
+        <div id="pagina-incidentes" class="page">
+            <h2>Todos los Incidentes</h2>
+            <div id="incidentes-lista-completa" class="incidentes-lista"></div>
+        </div>
+        
+        <div id="pagina-mis-reportes" class="page">
+            <h2>Mis Reportes</h2>
+            <div id="mis-incidentes-lista" class="incidentes-lista"></div>
+        </div>
+        
+        <div id="pagina-reportar" class="page">
+            <div class="reporte-form">
+                <h2>Reportar Incidente</h2>
+                <form id="reporteForm">
+                    <div class="form-group">
+                        <label>Tipo de Delito:</label>
+                        <select id="tipo_delito" required>
+                            <option value="robo">Robo</option>
+                            <option value="asalto">Asalto</option>
+                            <option value="sospechoso">Persona Sospechosa</option>
+                            <option value="violencia">Violencia</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción:</label>
+                        <textarea id="descripcion" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Dirección:</label>
+                        <input type="text" id="direccion" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn-ubicacion" onclick="obtenerUbicacionActual()">
+                            Usar mi ubicación actual
+                        </button>
+                        <div class="coordenadas" id="coordenadas_info"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Latitud:</label>
+                        <input type="text" id="latitud" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Longitud:</label>
+                        <input type="text" id="longitud" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Fotos:</label>
+                        <input type="file" id="imagenes" accept="image/*" multiple>
+                        <div id="preview_imagenes" class="preview-imagenes"></div>
+                    </div>
+                    <button type="submit">Reportar Incidente</button>
+                </form>
+            </div>
+        </div>
+        
+        <div id="pagina-login" class="page">
+            <div class="form-container">
+                <h2>Iniciar Sesión</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="login_email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña:</label>
+                        <input type="password" id="login_contrasena" required>
+                    </div>
+                    <button type="submit">Ingresar</button>
+                </form>
+                <div class="auth-link">
+                    <a onclick="mostrarPagina('recuperar')">¿Olvidaste tu contraseña?</a>
+                </div>
+            </div>
+        </div>
+        
+        <div id="pagina-registro" class="page">
             <div class="form-container">
                 <h2>Registro de Usuario</h2>
                 <form id="registroForm">
@@ -58,6 +164,9 @@
                     </div>
                     <button type="submit">Registrarse</button>
                 </form>
+                <div class="auth-link">
+                    <a onclick="mostrarPagina('verificar')">¿Ya tienes código de verificación?</a>
+                </div>
             </div>
             
             <div class="form-container">
@@ -68,90 +177,17 @@
                         <input type="email" id="ver_email" required>
                     </div>
                     <div class="form-group">
-                        <label>Código de Verificación:</label>
+                        <label>Código:</label>
                         <input type="text" id="ver_codigo" required>
                     </div>
-                    <button type="submit">Verificar Cuenta</button>
+                    <button type="submit">Verificar</button>
                 </form>
             </div>
         </div>
         
-        <div id="login" class="tab-content">
+        <div id="pagina-recuperar" class="page">
             <div class="form-container">
-                <h2>Iniciar Sesión</h2>
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label>Email:</label>
-                        <input type="email" id="login_email" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Contraseña:</label>
-                        <input type="password" id="login_contrasena" required>
-                    </div>
-                    <button type="submit">Ingresar</button>
-                </form>
-            </div>
-        </div>
-        
-        <div id="reportar" class="tab-content">
-            <div class="form-container">
-                <h2>Reportar Incidente de Seguridad</h2>
-                <form id="reporteForm">
-                    <div class="form-group">
-                        <label>Tipo de Delito:</label>
-                        <select id="tipo_delito" required>
-                            <option value="robo">Robo</option>
-                            <option value="asalto">Asalto</option>
-                            <option value="sospechoso">Persona Sospechosa</option>
-                            <option value="violencia">Violencia</option>
-                            <option value="otro">Otro</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Descripción:</label>
-                        <textarea id="descripcion" rows="3" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Dirección:</label>
-                        <input type="text" id="direccion" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Ubicación Actual:</label>
-                        <button type="button" class="btn-ubicacion" onclick="obtenerUbicacionActual()">
-                            Usar mi ubicación actual
-                        </button>
-                        <div class="coordenadas" id="coordenadas_info"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>Latitud:</label>
-                        <input type="text" id="latitud" readonly placeholder="Se obtendrá automáticamente">
-                    </div>
-                    <div class="form-group">
-                        <label>Longitud:</label>
-                        <input type="text" id="longitud" readonly placeholder="Se obtendrá automáticamente">
-                    </div>
-                    <div class="form-group">
-                        <label>Fotos del Incidente:</label>
-                        <input type="file" id="imagenes" accept="image/*" multiple>
-                        <div id="preview_imagenes" class="preview-imagenes"></div>
-                    </div>
-                    <button type="submit">Reportar Incidente</button>
-                </form>
-                
-                <div id="mapa"></div>
-            </div>
-        </div>
-        
-        <div id="incidentes" class="tab-content">
-            <div class="form-container">
-                <h2>Incidentes Reportados</h2>
-                <div id="incidentesLista"></div>
-            </div>
-        </div>
-        
-        <div id="recuperar" class="tab-content">
-            <div class="form-container">
-                <h2>Solicitar Recuperación</h2>
+                <h2>Recuperar Contraseña</h2>
                 <form id="solicitarRecuperacionForm">
                     <div class="form-group">
                         <label>Email:</label>
@@ -169,16 +205,23 @@
                         <input type="email" id="cambio_email" required>
                     </div>
                     <div class="form-group">
-                        <label>Código de Recuperación:</label>
+                        <label>Código:</label>
                         <input type="text" id="cambio_codigo" required>
                     </div>
                     <div class="form-group">
                         <label>Nueva Contraseña:</label>
                         <input type="password" id="cambio_contrasena" required>
                     </div>
-                    <button type="submit">Cambiar Contraseña</button>
+                    <button type="submit">Cambiar</button>
                 </form>
             </div>
+        </div>
+    </div>
+    
+    <div id="modal-detalle" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModal()">&times;</span>
+            <div id="modal-contenido"></div>
         </div>
     </div>
     

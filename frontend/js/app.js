@@ -22,4 +22,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('reporteForm')) {
         document.getElementById('reporteForm').addEventListener('submit', reportarIncidente);
     }
+    
+    actualizarUIporSesion();
+    
+    if (document.getElementById('mapa')) {
+        setTimeout(() => {
+            inicializarMapa();
+            cargarIncidentesPreview();
+        }, 500);
+    }
 });

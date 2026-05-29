@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from backend.schemas.auth_schemas import registro_usuario, login_usuario, verificar_codigo
+from backend.schemas.auth_schemas import registro_usuario, login_usuario, verificar_codigo, solicitar_recuperacion, cambiar_contrasena
 from backend.utils.auth_utils import auth_service
 from backend.utils.email_utils import email_service
 from database.db import db
@@ -36,7 +36,7 @@ def registrar_usuario(usuario: registro_usuario):
     <p>este codigo expira en 15 minutos.</p>
     """)
     
-    return {"mensaje": "usuario registrado. revisa tu correo para el codigo de verificacion"}
+    return {"mensaje": "usuario registrado. revisa tu correo"}
 
 @router.post("/verificar-codigo")
 def verificar_codigo(data: verificar_codigo):
@@ -84,7 +84,7 @@ def login(data: login_usuario):
     if not usuario["esta_verificado"]:
         cursor.close()
         conn.close()
-        raise HTTPException(status_code=401, detail="verifica tu cuenta primero. revisa tu correo")
+        raise HTTPException(status_code=401, detail="verifica tu cuenta primero")
     
     token = auth_service.create_token({"sub": data.email, "id": usuario["id"], "rol": usuario["rol"]})
     
@@ -92,3 +92,58 @@ def login(data: login_usuario):
     conn.close()
     
     return {"access_token": token, "token_type": "bearer", "rol": usuario["rol"]}
+
+@router.post("/solicitar-recuperacion")
+def solicitar_recuperacion(data: solicitar_recuperacion):
+    conn = db.get_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("select id from usuarios where email = %s", (data.email,))
+    usuario = cursor.fetchone()
+    
+    if not usuario:
+        cursor.close()
+        conn.close()
+        raise HTTPException(status_code=404, detail="email no registrado")
+    
+    codigo = email_service.generar_codigo()
+    
+    cursor.execute("update usuarios set token_recuperacion = %s where id = %s", (codigo, usuario["id"]))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    email_service.enviar_email(data.email, "recupera tu contraseña - scz segura predictiva", f"""
+    <h2>recuperacion de contraseña</h2>
+    <p>tu codigo de recuperacion es: <strong>{codigo}</strong></p>
+    <p>este codigo expira en 15 minutos.</p>
+    """)
+    
+    return {"mensaje": "codigo de recuperacion enviado a tu correo"}
+
+@router.post("/cambiar-contrasena")
+def cambiar_contrasena(data: cambiar_contrasena):
+    conn = db.get_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("select id, token_recuperacion from usuarios where email = %s", (data.email,))
+    usuario = cursor.fetchone()
+    
+    if not usuario:
+        cursor.close()
+        conn.close()
+        raise HTTPException(status_code=404, detail="usuario no encontrado")
+    
+    if usuario["token_recuperacion"] != data.codigo:
+        cursor.close()
+        conn.close()
+        raise HTTPException(status_code=400, detail="codigo incorrecto")
+    
+    nueva_password_hash = auth_service.hash_pass(data.nueva_password)
+    
+    cursor.execute("update usuarios set contra = %s, token_recuperacion = null where id = %s", (nueva_password_hash, usuario["id"]))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return {"mensaje": "contraseña actualizada exitosamente"}

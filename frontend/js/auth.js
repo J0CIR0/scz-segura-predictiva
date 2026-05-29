@@ -48,7 +48,7 @@ async function verificarCodigo(event) {
             showMessage(result.detail, 'error');
         }
     } catch (error) {
-        showMessage('Error en la verificacion', 'error');
+        showMessage('Error en la verificación', 'error');
     }
 }
 
@@ -68,7 +68,9 @@ async function loginUsuario(event) {
         const result = await response.json();
         if (response.ok) {
             localStorage.setItem('token', result.access_token);
-            showMessage('Login exitoso. Bienvenido ' + result.rol, 'success');
+            localStorage.setItem('userName', data.email.split('@')[0]);
+            actualizarUIporSesion();
+            showMessage('Bienvenido', 'success');
             document.getElementById('loginForm').reset();
         } else {
             showMessage(result.detail, 'error');
@@ -98,7 +100,7 @@ async function solicitarRecuperacion(event) {
             showMessage(result.detail, 'error');
         }
     } catch (error) {
-        showMessage('Error al solicitar recuperacion', 'error');
+        showMessage('Error', 'error');
     }
 }
 
@@ -124,6 +126,6 @@ async function cambiarContrasena(event) {
             showMessage(result.detail, 'error');
         }
     } catch (error) {
-        showMessage('Error al cambiar contrasena', 'error');
+        showMessage('Error', 'error');
     }
 }

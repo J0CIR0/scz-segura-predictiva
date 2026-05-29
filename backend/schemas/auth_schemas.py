@@ -15,3 +15,11 @@ class login_usuario(BaseModel):
 class verificar_codigo(BaseModel):
     email: EmailStr
     codigo: str
+
+class solicitar_recuperacion(BaseModel):
+    email: EmailStr
+
+class cambiar_contrasena(BaseModel):
+    email: EmailStr
+    codigo: str
+    nueva_password: str

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
 from backend.schemas.incidente_schemas import reporte_incidente, incidente_response
-from backend.utils.auth_utils import auth_service, security
+from backend.utils.auth_utils import auth_service
 from backend.utils.log_utils import registrar_log
 from database.db import db
 from typing import List
@@ -22,11 +22,11 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
 def reportar_incidente(
     incidente: reporte_incidente, 
     request: Request,
-    token_data: dict = Depends(security)
+    current_user: dict = Depends(auth_service.get_current_user)
 ):
-    usuario_id = token_data.get("id")
+    usuario_id = current_user.get("id")
     if not usuario_id:
-        raise HTTPException(status_code=401, detail="Token invalido")
+        raise HTTPException(status_code=401, detail="usuario no autenticado")
     
     ip_address = request.client.host
     user_agent = request.headers.get("user-agent")
@@ -61,12 +61,8 @@ def reportar_incidente(
     
     return {"mensaje": "incidente reportado exitosamente", "incidente_id": incidente_id}
 
-@router.get("/incidentes", response_model=List[incidente_response])
-def listar_incidentes(token_data: dict = Depends(security)):
-    usuario_id = token_data.get("id")
-    if not usuario_id:
-        raise HTTPException(status_code=401, detail="Token invalido")
-    
+@router.get("/incidentes")
+def listar_incidentes(current_user: dict = Depends(auth_service.get_current_user)):
     conn = db.get_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -94,55 +90,23 @@ def listar_incidentes(token_data: dict = Depends(security)):
         else:
             inc["imagenes"] = []
     
-    return incidentes
-
-@router.get("/incidentes-cercanos")
-def incidentes_cercanos(lat: float, lon: float, radio_km: float = 1, token_data: dict = Depends(security)):
-    usuario_id = token_data.get("id")
-    if not usuario_id:
-        raise HTTPException(status_code=401, detail="Token invalido")
-    
+    return {"incidentes": incidentes}
+@router.get("/incidentes-publicos")
+def listar_incidentes_publicos():
     conn = db.get_connection()
     cursor = conn.cursor(dictionary=True)
     
     cursor.execute("""
-        select id, tipo_delito, descripcion, latitud, longitud, direccion, creado_en
-        from incidentes
-        where estado = 'pendiente'
-        order by creado_en desc
-        limit 100
+        select i.id, i.usuario_id, i.tipo_delito, i.descripcion, 
+               i.latitud, i.longitud, i.direccion, i.imagenes, i.ubicacion_valida,
+               i.estado, i.creado_en,
+               u.nombre as vecino_nombre, u.apellido as vecino_apellido
+        from incidentes i
+        join usuarios u on i.usuario_id = u.id
+        where i.estado = 'pendiente'
+        order by i.creado_en desc
+        limit 50
     """)
-    
-    incidentes = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    
-    cercanos = []
-    for inc in incidentes:
-        distancia = calcular_distancia(lat, lon, inc["latitud"], inc["longitud"])
-        if distancia <= radio_km:
-            inc["distancia_km"] = round(distancia, 2)
-            cercanos.append(inc)
-    
-    return {"incidentes": cercanos, "total": len(cercanos)}
-
-@router.get("/mis-incidentes", response_model=List[incidente_response])
-def mis_incidentes(token_data: dict = Depends(security)):
-    usuario_id = token_data.get("id")
-    if not usuario_id:
-        raise HTTPException(status_code=401, detail="Token invalido")
-    
-    conn = db.get_connection()
-    cursor = conn.cursor(dictionary=True)
-    
-    cursor.execute("""
-        select id, usuario_id, tipo_delito, descripcion, 
-               latitud, longitud, direccion, imagenes, ubicacion_valida,
-               estado, creado_en
-        from incidentes
-        where usuario_id = %s
-        order by creado_en desc
-    """, (usuario_id,))
     
     incidentes = cursor.fetchall()
     cursor.close()
@@ -153,8 +117,8 @@ def mis_incidentes(token_data: dict = Depends(security)):
             try:
                 inc["imagenes"] = json.loads(inc["imagenes"])
             except:
-                inc["imagenes"] = []
+                inc["imagenes"] = inc["imagenes"]
         else:
             inc["imagenes"] = []
     
-    return incidentes
+    return {"incidentes": incidentes}

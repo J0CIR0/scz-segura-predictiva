@@ -1,5 +1,6 @@
 let mapaLeaflet;
 let marcadorLeaflet;
+let heatLayer;
 
 function inicializarMapa() {
     const centroSantaCruz = [-17.783333, -63.183333];
@@ -12,19 +13,47 @@ function inicializarMapa() {
     mapaLeaflet = L.map('mapa').setView(centroSantaCruz, 13);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         subdomains: 'abcd',
         maxZoom: 19,
-        minZoom: 3
+        minZoom: 11
     }).addTo(mapaLeaflet);
 
     L.control.scale().addTo(mapaLeaflet);
+    
+    cargarHeatMap();
+}
 
-    mapaLeaflet.on('click', function(e) {
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
-        actualizarCoordenadas(lat, lng);
-    });
+async function cargarHeatMap() {
+    try {
+        const response = await fetch('/api/incidentes-publicos');
+        const data = await response.json();
+        const incidentes = data.incidentes || [];
+        
+        const heatData = incidentes.map(inc => [inc.latitud, inc.longitud, 1]);
+        
+        if (heatLayer) {
+            mapaLeaflet.removeLayer(heatLayer);
+        }
+        
+        if (heatData.length > 0) {
+            heatLayer = L.heatLayer(heatData, {
+                radius: 25,
+                blur: 15,
+                maxZoom: 17,
+                minOpacity: 0.3,
+                gradient: {
+                    0.2: '#00cc00',
+                    0.4: '#ffff00',
+                    0.6: '#ff8c00',
+                    0.8: '#ff0000'
+                }
+            }).addTo(mapaLeaflet);
+        }
+        
+    } catch (error) {
+        console.error('Error cargando heatmap:', error);
+    }
 }
 
 function actualizarCoordenadas(lat, lng) {
@@ -33,7 +62,7 @@ function actualizarCoordenadas(lat, lng) {
 
     document.getElementById('latitud').value = latRedondeada;
     document.getElementById('longitud').value = lngRedondeada;
-    document.getElementById('coordenadas_info').innerHTML = `Ubicacion seleccionada: ${latRedondeada}, ${lngRedondeada}`;
+    document.getElementById('coordenadas_info').innerHTML = `Ubicación: ${latRedondeada}, ${lngRedondeada}`;
 
     if (marcadorLeaflet) {
         marcadorLeaflet.setLatLng([lat, lng]);
@@ -46,32 +75,37 @@ function actualizarCoordenadas(lat, lng) {
 
 function obtenerUbicacionActual() {
     if (!navigator.geolocation) {
-        showMessage("Tu navegador no soporta geolocalizacion.", "error");
+        showMessage("Geolocalización no soportada", "error");
         return;
     }
 
-    showMessage("Obteniendo tu ubicacion...", "success");
+    showMessage("Obteniendo ubicación...", "success");
 
     navigator.geolocation.getCurrentPosition(function(position) {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         actualizarCoordenadas(lat, lng);
-        showMessage("Ubicacion obtenida correctamente.", "success");
+        showMessage("Ubicación obtenida", "success");
     }, function(error) {
-        let mensaje = "Error al obtener ubicacion. ";
-        switch(error.code) {
-            case 1:
-                mensaje += "Permiso denegado.";
-                break;
-            case 2:
-                mensaje += "Ubicacion no disponible.";
-                break;
-            case 3:
-                mensaje += "Tiempo de espera agotado.";
-                break;
-            default:
-                mensaje += "Error desconocido.";
-        }
+        let mensaje = "Error al obtener ubicación";
         showMessage(mensaje, "error");
+    });
+}
+
+if (document.getElementById('imagenes')) {
+    document.getElementById('imagenes').addEventListener('change', function(e) {
+        const preview = document.getElementById('preview_imagenes');
+        preview.innerHTML = '';
+        const files = e.target.files;
+        
+        for (let i = 0; i < files.length; i++) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(files[i]);
+        }
     });
 }
