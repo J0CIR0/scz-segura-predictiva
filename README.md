@@ -35,47 +35,45 @@ SCZ Segura Predictiva es una plataforma web que permite a los vecinos reportar i
 
 ## Estructura del Proyecto
 scz_segura_predictiva/
-├── .env Variables de entorno
-├── .gitignore Archivos ignorados por git
-├── README.md Documentacion
-├── backend/
-│ ├── init.py
-│ ├── main.py Punto de entrada de la API
-│ ├── routes/
-│ │ ├── init.py
-│ │ ├── auth_routes.py Rutas de autenticacion
-│ │ ├── incidente_routes.py Rutas de incidentes
-│ │ ├── admin_routes.py Rutas de administracion
-│ │ └── policia_routes.py Rutas para policia
-│ ├── schemas/
-│ │ ├── init.py
-│ │ ├── auth_schemas.py Schemas de autenticacion
-│ │ └── incidente_schemas.py Schemas de incidentes
-│ ├── utils/
-│ │ ├── init.py
-│ │ ├── auth_utils.py JWT y bcrypt
-│ │ ├── email_utils.py SMTP y codigos
-│ │ └── log_utils.py Registro de logs
-│ └── models/
-│ └── init.py
-├── database/
-│ ├── init.py
-│ └── db.py Conexion a MySQL
-└── frontend/
-├── index.html Interfaz principal
-├── css/
-│ ├── base.css Estilos base
-│ ├── components.css Componentes UI
-│ ├── auth.css Estilos de autenticacion
-│ └── mapa.css Estilos de mapa
-└── js/
-├── config.js Configuracion
-├── ui.js UI y modales
-├── mapa.js Mapa y geolocalizacion
-├── auth.js Autenticacion
-├── incidentes.js CRUD incidentes
-└── app.js Inicializacion
-
+----.env
+----.gitignore
+----db.sql
+----package.json
+----package-lock.json
+----README.md
+----backend/
+--------main.py
+--------routes/
+------------admin.routes.py
+------------auth_routes.py
+------------incidente_routes.py
+------------policia_routes.py
+--------schemas/
+------------auth_schemas.py
+------------incidente_schemas.py
+--------utils/
+------------auth_utils.py
+------------email_utils.py
+------------log_utils.py
+----database/
+--------db.py
+----frontend/
+--------index.html
+--------css/
+------------auth.css
+------------base.css
+------------components.css
+------------incidentes.css
+------------mapa.css
+------------styles.css
+--------js/
+------------app.js
+------------auth.js
+------------config.js
+------------incidentes.js
+------------mapa.js
+------------ui.js
+--------node_modules
 
 ## Instalacion
 
