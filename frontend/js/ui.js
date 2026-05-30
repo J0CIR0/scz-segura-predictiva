@@ -42,6 +42,10 @@ function mostrarPagina(paginaId) {
     if (paginaId === 'admin') {
         cargarAdminPanel();
     }
+    
+    if (paginaId === 'policia') {
+        cargarPanelPolicia();
+    }
 }
 
 function actualizarUIporSesion() {
@@ -72,11 +76,21 @@ function actualizarUIporSesion() {
         }
         
         const btnAdmin = document.getElementById('btn-admin');
+        const btnPolicia = document.getElementById('btn-policia');
+        
         if (btnAdmin) {
-            if (userRol === 'admin_junta' || userRol === 'superadmin') {
+            if (userRol === 'admin_junta') {
                 btnAdmin.style.display = 'block';
             } else {
                 btnAdmin.style.display = 'none';
+            }
+        }
+        
+        if (btnPolicia) {
+            if (userRol === 'policia') {
+                btnPolicia.style.display = 'block';
+            } else {
+                btnPolicia.style.display = 'none';
             }
         }
     } else {
@@ -277,6 +291,7 @@ async function cargarAdminPanel() {
 }
 
 async function cambiarRolUsuario(usuarioId, nuevoRol) {
+
     const token = localStorage.getItem('token');
     
     try {
@@ -295,5 +310,204 @@ async function cambiarRolUsuario(usuarioId, nuevoRol) {
         }
     } catch (error) {
         showMessage('Error al cambiar rol', 'error');
+    }
+}
+async function cargarPanelPolicia() {
+    const token = localStorage.getItem('token');
+    const userRol = localStorage.getItem('userRol');
+    
+    if (userRol !== 'policia') {
+        showMessage('No tienes permisos de policia', 'error');
+        mostrarPagina('mapa');
+        return;
+    }
+    
+    try {
+        const asignadosResponse = await fetch('/api/policia/incidentes-asignados', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const asignadosData = await asignadosResponse.json();
+        
+        const asignadosLista = document.getElementById('policia-incidentes-asignados');
+        asignadosLista.innerHTML = '';
+        
+        asignadosData.incidentes.forEach(inc => {
+            const card = document.createElement('div');
+            card.className = 'incidente-card';
+            card.onclick = () => mostrarDetalleIncidentePolicia(inc);
+            card.innerHTML = `
+                <div class="incidente-titulo">${inc.tipo_delito}</div>
+                <div class="incidente-descripcion">${inc.descripcion.substring(0, 100)}...</div>
+                <div class="incidente-fecha">Dirección: ${inc.direccion}</div>
+                <div class="incidente-fecha">Reportado por: ${inc.vecino_nombre}</div>
+                <div class="incidente-fecha">Telefono vecino: ${inc.vecino_telefono}</div>
+                <div class="incidente-fecha">Asignado: ${new Date(inc.fecha_asignacion).toLocaleString()}</div>
+            `;
+            asignadosLista.appendChild(card);
+        });
+        
+        const pendientesResponse = await fetch('/api/policia/incidentes-pendientes', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const pendientesData = await pendientesResponse.json();
+        
+        const pendientesLista = document.getElementById('policia-incidentes-pendientes');
+        pendientesLista.innerHTML = '';
+        
+        pendientesData.incidentes.forEach(inc => {
+            const card = document.createElement('div');
+            card.className = 'incidente-card';
+            card.onclick = () => mostrarAsignarIncidente(inc);
+            card.innerHTML = `
+                <div class="incidente-titulo">${inc.tipo_delito}</div>
+                <div class="incidente-descripcion">${inc.descripcion.substring(0, 100)}...</div>
+                <div class="incidente-fecha">Dirección: ${inc.direccion}</div>
+                <div class="incidente-fecha">Reportado por: ${inc.vecino_nombre}</div>
+                <div class="incidente-fecha">Telefono vecino: ${inc.vecino_telefono}</div>
+                <button class="btn-ubicacion" onclick="event.stopPropagation();asignarIncidente(${inc.id})">Asignarme este incidente</button>
+            `;
+            pendientesLista.appendChild(card);
+        });
+        
+    } catch (error) {
+        console.error('Error cargando panel policia:', error);
+        showMessage('Error al cargar panel policia', 'error');
+    }
+}
+
+async function mostrarDetalleIncidentePolicia(incidente) {
+    const modal = document.getElementById('modal-detalle');
+    const contenido = document.getElementById('modal-contenido');
+    
+    let imagenesHtml = '';
+    if (incidente.imagenes) {
+        if (Array.isArray(incidente.imagenes) && incidente.imagenes.length > 0) {
+            incidente.imagenes.forEach(img => {
+                imagenesHtml += `<img src="${img}" style="width:100%;margin-bottom:10px;border-radius:5px;">`;
+            });
+        } else if (typeof incidente.imagenes === 'string' && incidente.imagenes.length > 0) {
+            imagenesHtml = `<img src="${incidente.imagenes}" style="width:100%;border-radius:5px;">`;
+        }
+    }
+    
+    contenido.innerHTML = `
+        <h3>${incidente.tipo_delito.toUpperCase()}</h3>
+        <p><strong>Descripción:</strong> ${incidente.descripcion}</p>
+        <p><strong>Dirección:</strong> ${incidente.direccion}</p>
+        <p><strong>Coordenadas:</strong> ${incidente.latitud}, ${incidente.longitud}</p>
+        <p><strong>Reportado por:</strong> ${incidente.vecino_nombre} ${incidente.vecino_apellido || ''}</p>
+        <p><strong>Telefono vecino:</strong> ${incidente.vecino_telefono || 'No disponible'}</p>
+        <p><strong>Estado:</strong> ${incidente.estado}</p>
+        <p><strong>Fecha:</strong> ${new Date(incidente.creado_en).toLocaleString()}</p>
+        ${imagenesHtml}
+        <div style="margin-top:15px;display:flex;gap:10px;">
+            <button onclick="resolverIncidente(${incidente.id})" style="background-color:#28a745;">Marcar como Resuelto</button>
+            <button onclick="rechazarIncidente(${incidente.id})" style="background-color:#dc3545;">Rechazar Incidente</button>
+        </div>
+    `;
+    
+    modal.style.display = 'flex';
+}
+
+async function mostrarAsignarIncidente(incidente) {
+    const modal = document.getElementById('modal-detalle');
+    const contenido = document.getElementById('modal-contenido');
+    
+    let imagenesHtml = '';
+    if (incidente.imagenes) {
+        if (Array.isArray(incidente.imagenes) && incidente.imagenes.length > 0) {
+            incidente.imagenes.forEach(img => {
+                imagenesHtml += `<img src="${img}" style="width:100%;margin-bottom:10px;border-radius:5px;">`;
+            });
+        } else if (typeof incidente.imagenes === 'string' && incidente.imagenes.length > 0) {
+            imagenesHtml = `<img src="${incidente.imagenes}" style="width:100%;border-radius:5px;">`;
+        }
+    }
+    
+    contenido.innerHTML = `
+        <h3>${incidente.tipo_delito.toUpperCase()}</h3>
+        <p><strong>Descripción:</strong> ${incidente.descripcion}</p>
+        <p><strong>Dirección:</strong> ${incidente.direccion}</p>
+        <p><strong>Coordenadas:</strong> ${incidente.latitud}, ${incidente.longitud}</p>
+        <p><strong>Reportado por:</strong> ${incidente.vecino_nombre} ${incidente.vecino_apellido || ''}</p>
+        <p><strong>Fecha:</strong> ${new Date(incidente.creado_en).toLocaleString()}</p>
+        ${imagenesHtml}
+        <button onclick="asignarIncidente(${incidente.id})" style="background-color:#004d00;">Asignarme este incidente</button>
+    `;
+    
+    modal.style.display = 'flex';
+}
+
+async function asignarIncidente(incidenteId) {
+    const token = localStorage.getItem('token');
+    
+    try {
+        const response = await fetch(`/api/policia/asignar-incidente/${incidenteId}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await response.json();
+        if (response.ok) {
+            showMessage(result.mensaje, 'success');
+            cerrarModal();
+            cargarPanelPolicia();
+        } else {
+            showMessage(result.detail, 'error');
+        }
+    } catch (error) {
+        showMessage('Error al asignar incidente', 'error');
+    }
+}
+
+async function resolverIncidente(incidenteId) {
+    const token = localStorage.getItem('token');
+    const observaciones = prompt('Ingrese observaciones sobre la resolucion:');
+    
+    try {
+        const response = await fetch(`/api/policia/resolver-incidente/${incidenteId}?observaciones=${encodeURIComponent(observaciones || '')}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await response.json();
+        if (response.ok) {
+            showMessage(result.mensaje, 'success');
+            cerrarModal();
+            cargarPanelPolicia();
+            cargarHeatMap();
+            cargarIncidentesPreview();
+        } else {
+            showMessage(result.detail, 'error');
+        }
+    } catch (error) {
+        showMessage('Error al resolver incidente', 'error');
+    }
+}
+
+async function rechazarIncidente(incidenteId) {
+    const token = localStorage.getItem('token');
+    const motivo = prompt('Ingrese el motivo del rechazo:');
+    
+    if (!motivo) {
+        showMessage('Debe ingresar un motivo', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/policia/rechazar-incidente/${incidenteId}?motivo=${encodeURIComponent(motivo)}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await response.json();
+        if (response.ok) {
+            showMessage(result.mensaje, 'success');
+            cerrarModal();
+            cargarPanelPolicia();
+            cargarHeatMap();
+            cargarIncidentesPreview();
+        } else {
+            showMessage(result.detail, 'error');
+        }
+    } catch (error) {
+        showMessage('Error al rechazar incidente', 'error');
     }
 }

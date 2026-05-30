@@ -34,7 +34,9 @@ def reportar_incidente(
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    imagenes_json = json.dumps(incidente.imagenes) if incidente.imagenes else None
+    imagenes_json = None
+    if incidente.imagenes and len(incidente.imagenes) > 0:
+        imagenes_json = json.dumps(incidente.imagenes[:3])
     
     cursor.execute("""
         insert into incidentes (usuario_id, tipo_delito, descripcion, latitud, longitud, direccion, imagenes, ip_address)
@@ -86,7 +88,7 @@ def listar_incidentes(current_user: dict = Depends(auth_service.get_current_user
             try:
                 inc["imagenes"] = json.loads(inc["imagenes"])
             except:
-                inc["imagenes"] = inc["imagenes"]
+                inc["imagenes"] = []
         else:
             inc["imagenes"] = []
     
@@ -118,7 +120,7 @@ def listar_incidentes_publicos():
             try:
                 inc["imagenes"] = json.loads(inc["imagenes"])
             except:
-                inc["imagenes"] = inc["imagenes"]
+                inc["imagenes"] = []
         else:
             inc["imagenes"] = []
     
@@ -151,7 +153,7 @@ def mis_incidentes(current_user: dict = Depends(auth_service.get_current_user)):
             try:
                 inc["imagenes"] = json.loads(inc["imagenes"])
             except:
-                inc["imagenes"] = inc["imagenes"]
+                inc["imagenes"] = []
         else:
             inc["imagenes"] = []
     
