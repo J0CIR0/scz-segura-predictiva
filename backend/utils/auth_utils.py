@@ -6,14 +6,14 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import HTTPException, Depends
 
 security = HTTPBearer()
-
+    
 class AuthService:
     def __init__(self):
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         self.secret_key = os.getenv("SECRET_KEY")
         self.algorithm = "HS256"
     
-    def hash_pass(self, password: str) -> str:
+    def hash_pass(self, password: str) -> str:  
         return self.pwd_context.hash(password)
     
     def verify_pass(self, plain_password: str, hashed_password: str) -> bool:

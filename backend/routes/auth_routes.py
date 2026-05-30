@@ -22,9 +22,9 @@ def registrar_usuario(usuario: registro_usuario):
     codigo = email_service.generar_codigo()
     
     cursor.execute("""
-        insert into usuarios (ci, nombre, apellido, email, telefono, contra, codigo_verificacion)
-        values (%s, %s, %s, %s, %s, %s, %s)
-    """, (usuario.ci, usuario.nombre, usuario.apellido, usuario.email, usuario.telefono, password_hash, codigo))
+        insert into usuarios (ci, nombre, apellido, email, telefono, contra, rol, codigo_verificacion)
+        values (%s, %s, %s, %s, %s, %s, %s, %s)
+    """, (usuario.ci, usuario.nombre, usuario.apellido, usuario.email, usuario.telefono, password_hash, "vecino", codigo))
     
     conn.commit()
     cursor.close()
@@ -86,12 +86,21 @@ def login(data: login_usuario):
         conn.close()
         raise HTTPException(status_code=401, detail="verifica tu cuenta primero")
     
-    token = auth_service.create_token({"sub": data.email, "id": usuario["id"], "rol": usuario["rol"]})
+    token = auth_service.create_token({
+        "sub": data.email, 
+        "id": usuario["id"], 
+        "rol": usuario["rol"]
+    })
     
     cursor.close()
     conn.close()
     
-    return {"access_token": token, "token_type": "bearer", "rol": usuario["rol"]}
+    return {
+        "access_token": token, 
+        "token_type": "bearer", 
+        "rol": usuario["rol"],
+        "nombre": usuario.get("nombre", "Usuario")
+    }
 
 @router.post("/solicitar-recuperacion")
 def solicitar_recuperacion(data: solicitar_recuperacion):
@@ -107,8 +116,9 @@ def solicitar_recuperacion(data: solicitar_recuperacion):
         raise HTTPException(status_code=404, detail="email no registrado")
     
     codigo = email_service.generar_codigo()
+    expiracion = datetime.now() + timedelta(minutes=15)
     
-    cursor.execute("update usuarios set token_recuperacion = %s where id = %s", (codigo, usuario["id"]))
+    cursor.execute("update usuarios set token_recuperacion = %s, token_recuperacion_expiracion = %s where id = %s", (codigo, expiracion, usuario["id"]))
     conn.commit()
     cursor.close()
     conn.close()
@@ -126,7 +136,7 @@ def cambiar_contrasena(data: cambiar_contrasena):
     conn = db.get_connection()
     cursor = conn.cursor(dictionary=True)
     
-    cursor.execute("select id, token_recuperacion from usuarios where email = %s", (data.email,))
+    cursor.execute("select id, token_recuperacion, token_recuperacion_expiracion from usuarios where email = %s", (data.email,))
     usuario = cursor.fetchone()
     
     if not usuario:
@@ -139,9 +149,14 @@ def cambiar_contrasena(data: cambiar_contrasena):
         conn.close()
         raise HTTPException(status_code=400, detail="codigo incorrecto")
     
+    if datetime.now() > usuario["token_recuperacion_expiracion"]:
+        cursor.close()
+        conn.close()
+        raise HTTPException(status_code=400, detail="codigo expirado")
+    
     nueva_password_hash = auth_service.hash_pass(data.nueva_password)
     
-    cursor.execute("update usuarios set contra = %s, token_recuperacion = null where id = %s", (nueva_password_hash, usuario["id"]))
+    cursor.execute("update usuarios set contra = %s, token_recuperacion = null, token_recuperacion_expiracion = null where id = %s", (nueva_password_hash, usuario["id"]))
     conn.commit()
     cursor.close()
     conn.close()
