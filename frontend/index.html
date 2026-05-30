@@ -19,7 +19,7 @@
     </div>
     
     <div id="message" class="message"></div>
-        
+    
     <div id="auth-nav" class="navbar" style="display: none;">
         <div class="user-info">
             <span>Bienvenido, <span id="user-name">Vecino</span></span>
@@ -60,16 +60,7 @@
             <h3>Incidentes Recientes</h3>
             <div id="incidentes-preview" class="incidentes-lista"></div>
         </div>
-        <div id="pagina-admin" class="page">
-            <h2>Panel de Administración</h2>
-            <div class="admin-stats" id="admin-stats"></div>
-            
-            <h3>Incidentes por Validar</h3>
-            <div id="admin-incidentes-lista" class="incidentes-lista"></div>
-            
-            <h3>Usuarios del Sistema</h3>
-            <div id="admin-usuarios-lista"></div>
-        </div>       
+        
         <div id="pagina-incidentes" class="page">
             <h2>Todos los Incidentes</h2>
             <div id="incidentes-lista-completa" class="incidentes-lista"></div>
@@ -83,10 +74,15 @@
         <div id="pagina-reportar" class="page">
             <div class="reporte-form">
                 <h2>Reportar Incidente</h2>
+                <div id="ubicacion-status" class="ubicacion-status"></div>
+                <div class="warning-message" style="background-color:#fff3cd;padding:10px;margin-bottom:15px;border-radius:5px;border:1px solid #ffc107;">
+                    <strong>Importante:</strong> Para reportar un incidente, debes obtener tu ubicacion actual.
+                </div>
                 <form id="reporteForm">
                     <div class="form-group">
                         <label>Tipo de Delito:</label>
                         <select id="tipo_delito" required>
+                            <option value="">Seleccione un tipo</option>
                             <option value="robo">Robo</option>
                             <option value="asalto">Asalto</option>
                             <option value="sospechoso">Persona Sospechosa</option>
@@ -96,32 +92,29 @@
                     </div>
                     <div class="form-group">
                         <label>Descripción:</label>
-                        <textarea id="descripcion" rows="3" required></textarea>
+                        <textarea id="descripcion" rows="3" placeholder="Describa lo sucedido..." required></textarea>
                     </div>
                     <div class="form-group">
-                        <label>Dirección:</label>
-                        <input type="text" id="direccion" required>
+                        <label>Dirección (Calle/Avenida):</label>
+                        <input type="text" id="direccion" placeholder="Se obtendrá al obtener ubicacion" readonly>
                     </div>
                     <div class="form-group">
-                        <button type="button" class="btn-ubicacion" onclick="obtenerUbicacionActual()">
-                            Usar mi ubicación actual
-                        </button>
-                        <div class="coordenadas" id="coordenadas_info"></div>
+                        <button type="button" id="btn-obtener-ubicacion" style="background-color:#004d00;color:white;padding:10px;border:none;border-radius:5px;cursor:pointer;width:auto;">Obtener mi ubicacion actual</button>
                     </div>
                     <div class="form-group">
                         <label>Latitud:</label>
-                        <input type="text" id="latitud" readonly>
+                        <input type="text" id="latitud" readonly placeholder="Esperando ubicacion...">
                     </div>
                     <div class="form-group">
                         <label>Longitud:</label>
-                        <input type="text" id="longitud" readonly>
+                        <input type="text" id="longitud" readonly placeholder="Esperando ubicacion...">
                     </div>
                     <div class="form-group">
-                        <label>Fotos:</label>
+                        <label>Fotos del Incidente (maximo 3):</label>
                         <input type="file" id="imagenes" accept="image/*" multiple>
                         <div id="preview_imagenes" class="preview-imagenes"></div>
                     </div>
-                    <button type="submit">Reportar Incidente</button>
+                    <button type="submit" id="btn-reportar" disabled>Reportar Incidente</button>
                 </form>
             </div>
         </div>
@@ -227,6 +220,23 @@
                     <button type="submit">Cambiar</button>
                 </form>
             </div>
+        </div>
+        
+        <div id="pagina-admin" class="page">
+            <h2>Panel de Administración</h2>
+            <div id="admin-stats"></div>
+            <h3>Incidentes por Validar</h3>
+            <div id="admin-incidentes-lista" class="incidentes-lista"></div>
+            <h3>Usuarios del Sistema</h3>
+            <div id="admin-usuarios-lista"></div>
+        </div>
+        
+        <div id="pagina-policia" class="page">
+            <h2>Panel Policial</h2>
+            <h3>Mis Incidentes Asignados</h3>
+            <div id="policia-incidentes-asignados" class="incidentes-lista"></div>
+            <h3>Incidentes Pendientes por Asignar</h3>
+            <div id="policia-incidentes-pendientes" class="incidentes-lista"></div>
         </div>
     </div>
     

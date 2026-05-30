@@ -145,6 +145,17 @@
     border-radius: 5px;
 }
 
+.ubicacion-status {
+    margin-bottom: 15px;
+}
+
+.ubicacion-status .message {
+    position: relative;
+    top: auto;
+    right: auto;
+    max-width: none;
+}
+
 @media (max-width: 768px) {
     .mapa-container {
         height: 300px;

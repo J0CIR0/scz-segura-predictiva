@@ -68,7 +68,10 @@ def login(data: login_usuario):
     conn = db.get_connection()
     cursor = conn.cursor(dictionary=True)
     
-    cursor.execute("select id, contra, esta_verificado, rol from usuarios where email = %s", (data.email,))
+    cursor.execute("""
+        select id, contra, esta_verificado, rol, nombre, apellido
+        from usuarios where email = %s
+    """, (data.email,))
     usuario = cursor.fetchone()
     
     if not usuario:
@@ -86,6 +89,8 @@ def login(data: login_usuario):
         conn.close()
         raise HTTPException(status_code=401, detail="verifica tu cuenta primero")
     
+    print(f"Usuario ID: {usuario['id']} - Rol: {usuario['rol']}")
+    
     token = auth_service.create_token({
         "sub": data.email, 
         "id": usuario["id"], 
@@ -99,7 +104,8 @@ def login(data: login_usuario):
         "access_token": token, 
         "token_type": "bearer", 
         "rol": usuario["rol"],
-        "nombre": usuario.get("nombre", "Usuario")
+        "nombre": usuario["nombre"],
+        "apellido": usuario["apellido"]
     }
 
 @router.post("/solicitar-recuperacion")

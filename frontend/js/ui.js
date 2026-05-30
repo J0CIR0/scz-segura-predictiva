@@ -1,6 +1,7 @@
 let mapaLeaflet = null;
 let marcadorLeaflet = null;
 let heatLayer = null;
+let ubicacionSeleccionada = null;
 let currentUserRol = null;
 
 function showMessage(text, type) {
@@ -37,6 +38,19 @@ function mostrarPagina(paginaId) {
     
     if (paginaId === 'mis-reportes') {
         cargarMisIncidentes();
+    }
+
+    if (paginaId === 'reportar') {
+        // Al mostrar la página de reportar, deshabilitar el botón hasta obtener ubicacion
+        const btnReportar = document.getElementById('btn-reportar');
+        if (btnReportar) btnReportar.disabled = true;
+
+        // Intentar obtener ubicacion automaticamente si la funcion está disponible
+        setTimeout(() => {
+            if (typeof obtenerUbicacionManual === 'function') {
+                obtenerUbicacionManual();
+            }
+        }, 100);
     }
     
     if (paginaId === 'admin') {

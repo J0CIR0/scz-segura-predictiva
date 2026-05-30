@@ -1,22 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
-from backend.schemas.incidente_schemas import reporte_incidente, incidente_response
+from backend.schemas.incidente_schemas import reporte_incidente
 from backend.utils.auth_utils import auth_service
-from backend.utils.log_utils import registrar_log
 from database.db import db
-from typing import List
 import json
-from math import radians, sin, cos, sqrt, atan2
+import requests
 
 router = APIRouter()
-
-def calcular_distancia(lat1, lon1, lat2, lon2):
-    R = 6371
-    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * atan2(sqrt(a), sqrt(1-a))
-    return R * c
 
 @router.post("/reportar-incidente")
 def reportar_incidente(
@@ -25,14 +14,22 @@ def reportar_incidente(
     current_user: dict = Depends(auth_service.get_current_user)
 ):
     usuario_id = current_user.get("id")
+    
     if not usuario_id:
         raise HTTPException(status_code=401, detail="usuario no autenticado")
     
-    ip_address = request.client.host
-    user_agent = request.headers.get("user-agent")
-    
     conn = db.get_connection()
     cursor = conn.cursor()
+    
+    cursor.execute("select id from usuarios where id = %s", (usuario_id,))
+    existe = cursor.fetchone()
+    
+    if not existe:
+        cursor.close()
+        conn.close()
+        raise HTTPException(status_code=401, detail="usuario no encontrado")
+    
+    ip_address = request.client.host
     
     imagenes_json = None
     if incidente.imagenes and len(incidente.imagenes) > 0:
@@ -47,16 +44,6 @@ def reportar_incidente(
     
     conn.commit()
     incidente_id = cursor.lastrowid
-    
-    registrar_log(
-        usuario_id=usuario_id,
-        accion="CREAR_INCIDENTE",
-        tabla_afectada="incidentes",
-        registro_id=incidente_id,
-        datos_nuevos={"tipo_delito": incidente.tipo_delito, "latitud": incidente.latitud, "longitud": incidente.longitud},
-        ip_address=ip_address,
-        user_agent=user_agent
-    )
     
     cursor.close()
     conn.close()
@@ -158,3 +145,35 @@ def mis_incidentes(current_user: dict = Depends(auth_service.get_current_user)):
             inc["imagenes"] = []
     
     return incidentes
+
+@router.get("/geocodificar")
+def geocodificar(lat: float, lon: float):
+    url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&zoom=18&addressdetails=1"
+    
+    try:
+        response = requests.get(url, headers={"User-Agent": "SCZSeguraPredictiva/1.0"})
+        data = response.json()
+        
+        direccion = ""
+        if "address" in data:
+            addr = data["address"]
+            calle = addr.get("road", "")
+            avenida = addr.get("avenue", "")
+            barrio = addr.get("suburb", "")
+            ciudad = addr.get("city", addr.get("town", addr.get("village", "")))
+            
+            if calle:
+                direccion = calle
+            if avenida:
+                direccion = avenida if not direccion else direccion + " y " + avenida
+            if barrio:
+                direccion = direccion + ", " + barrio if direccion else barrio
+            if ciudad:
+                direccion = direccion + ", " + ciudad if direccion else ciudad
+        
+        if not direccion:
+            direccion = data.get("display_name", "")
+        
+        return {"direccion": direccion}
+    except:
+        return {"direccion": ""}

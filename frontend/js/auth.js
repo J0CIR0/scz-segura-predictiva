@@ -68,7 +68,8 @@ async function loginUsuario(event) {
         const result = await response.json();
         if (response.ok) {
             localStorage.setItem('token', result.access_token);
-            localStorage.setItem('userName', data.email.split('@')[0]);
+            localStorage.setItem('userName', result.nombre || data.email.split('@')[0]);
+            if (result.rol) localStorage.setItem('userRol', result.rol);
             actualizarUIporSesion();
             mostrarPagina('mapa');
             showMessage('Bienvenido', 'success');
@@ -128,34 +129,5 @@ async function cambiarContrasena(event) {
         }
     } catch (error) {
         showMessage('Error', 'error');
-    }
-    async function loginUsuario(event) {
-        event.preventDefault();
-        const data = {
-            email: document.getElementById('login_email').value,
-            password: document.getElementById('login_contrasena').value
-        };
-        
-        try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
-            if (response.ok) {
-                localStorage.setItem('token', result.access_token);
-                localStorage.setItem('userName', result.nombre || data.email.split('@')[0]);
-                localStorage.setItem('userRol', result.rol);
-                actualizarUIporSesion();
-                mostrarPagina('mapa');
-                showMessage('Bienvenido ' + result.nombre, 'success');
-                document.getElementById('loginForm').reset();
-            } else {
-                showMessage(result.detail, 'error');
-            }
-        } catch (error) {
-            showMessage('Error en el login', 'error');
-        }
     }
 }
