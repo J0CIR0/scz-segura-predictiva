@@ -114,3 +114,8 @@ select id, nombre, email, rol from usuarios;
 
 use scz_segura_predictiva;
 select * from incidentes;
+
+SET GLOBAL max_allowed_packet = 268435456;
+
+
+ALTER TABLE incidentes MODIFY COLUMN imagenes LONGTEXT NULL;

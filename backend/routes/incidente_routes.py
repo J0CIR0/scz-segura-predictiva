@@ -3,9 +3,35 @@ from backend.schemas.incidente_schemas import reporte_incidente
 from backend.utils.auth_utils import auth_service
 from database.db import db
 import json
+import re
 import requests
+import mysql.connector
 
 router = APIRouter()
+
+
+def normalizar_imagenes_guardadas(valor):
+    if not valor:
+        return []
+
+    if isinstance(valor, list):
+        return [img for img in valor if isinstance(img, str) and img]
+
+    if isinstance(valor, str):
+        try:
+            parsed = json.loads(valor)
+            if isinstance(parsed, list):
+                return [img for img in parsed if isinstance(img, str) and img]
+        except Exception:
+            if valor.startswith("data:image"):
+                return [valor]
+
+            # Fallback for malformed/truncated JSON rows, e.g. '["data:image...'
+            coincidencias = re.findall(r"data:image/[^\"'\s]+", valor)
+            if coincidencias:
+                return coincidencias
+
+    return []
 
 @router.post("/reportar-incidente")
 def reportar_incidente(
@@ -18,37 +44,48 @@ def reportar_incidente(
     if not usuario_id:
         raise HTTPException(status_code=401, detail="usuario no autenticado")
     
-    conn = db.get_connection()
-    cursor = conn.cursor()
+    conn = None
+    cursor = None
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("select id from usuarios where id = %s", (usuario_id,))
+        existe = cursor.fetchone()
+        
+        if not existe:
+            raise HTTPException(status_code=401, detail="usuario no encontrado")
+        
+        ip_address = request.client.host
+        
+        imagenes_json = None
+        imagenes_guardadas = normalizar_imagenes_guardadas(incidente.imagenes)
+        if imagenes_guardadas:
+            imagenes_json = json.dumps(imagenes_guardadas, ensure_ascii=False)
+        
+        cursor.execute("""
+            INSERT INTO incidentes (usuario_id, tipo_delito, descripcion, latitud, longitud, direccion, imagenes, ip_address)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (usuario_id, incidente.tipo_delito, incidente.descripcion, 
+              incidente.latitud, incidente.longitud, incidente.direccion,
+              imagenes_json, ip_address))
+        
+        conn.commit()
+        incidente_id = cursor.lastrowid
+        
+        return {"mensaje": "incidente reportado exitosamente", "incidente_id": incidente_id}
     
-    cursor.execute("select id from usuarios where id = %s", (usuario_id,))
-    existe = cursor.fetchone()
+    except mysql.connector.Error as e:
+        if conn:
+            conn.rollback()
+        print(f"Error de MySQL: {e}")
+        raise HTTPException(status_code=500, detail=f"Error de base de datos: {str(e)}")
     
-    if not existe:
-        cursor.close()
-        conn.close()
-        raise HTTPException(status_code=401, detail="usuario no encontrado")
-    
-    ip_address = request.client.host
-    
-    imagenes_json = None
-    if incidente.imagenes and len(incidente.imagenes) > 0:
-        imagenes_json = json.dumps(incidente.imagenes[:3])
-    
-    cursor.execute("""
-        insert into incidentes (usuario_id, tipo_delito, descripcion, latitud, longitud, direccion, imagenes, ip_address)
-        values (%s, %s, %s, %s, %s, %s, %s, %s)
-    """, (usuario_id, incidente.tipo_delito, incidente.descripcion, 
-          incidente.latitud, incidente.longitud, incidente.direccion,
-          imagenes_json, ip_address))
-    
-    conn.commit()
-    incidente_id = cursor.lastrowid
-    
-    cursor.close()
-    conn.close()
-    
-    return {"mensaje": "incidente reportado exitosamente", "incidente_id": incidente_id}
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 @router.get("/incidentes")
 def listar_incidentes(current_user: dict = Depends(auth_service.get_current_user)):
@@ -71,13 +108,7 @@ def listar_incidentes(current_user: dict = Depends(auth_service.get_current_user
     conn.close()
     
     for inc in incidentes:
-        if inc.get("imagenes") and inc["imagenes"]:
-            try:
-                inc["imagenes"] = json.loads(inc["imagenes"])
-            except:
-                inc["imagenes"] = []
-        else:
-            inc["imagenes"] = []
+        inc["imagenes"] = normalizar_imagenes_guardadas(inc.get("imagenes"))
     
     return {"incidentes": incidentes}
 
@@ -103,13 +134,7 @@ def listar_incidentes_publicos():
     conn.close()
     
     for inc in incidentes:
-        if inc.get("imagenes") and inc["imagenes"]:
-            try:
-                inc["imagenes"] = json.loads(inc["imagenes"])
-            except:
-                inc["imagenes"] = []
-        else:
-            inc["imagenes"] = []
+        inc["imagenes"] = normalizar_imagenes_guardadas(inc.get("imagenes"))
     
     return {"incidentes": incidentes}
 
@@ -136,13 +161,7 @@ def mis_incidentes(current_user: dict = Depends(auth_service.get_current_user)):
     conn.close()
     
     for inc in incidentes:
-        if inc.get("imagenes") and inc["imagenes"]:
-            try:
-                inc["imagenes"] = json.loads(inc["imagenes"])
-            except:
-                inc["imagenes"] = []
-        else:
-            inc["imagenes"] = []
+        inc["imagenes"] = normalizar_imagenes_guardadas(inc.get("imagenes"))
     
     return incidentes
 

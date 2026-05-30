@@ -1,11 +1,177 @@
 let fotosSeleccionadas = [];
 
+function normalizarImagenesIncidente(imagenes) {
+    if (!imagenes) {
+        return [];
+    }
+
+    if (Array.isArray(imagenes)) {
+        return imagenes.filter(function(img) {
+            return typeof img === 'string' && img.length > 0;
+        });
+    }
+
+    if (typeof imagenes === 'string') {
+        try {
+            const parsed = JSON.parse(imagenes);
+            if (Array.isArray(parsed)) {
+                return parsed.filter(function(img) {
+                    return typeof img === 'string' && img.length > 0;
+                });
+            }
+        } catch (error) {
+            if (imagenes.startsWith('data:image')) {
+                return [imagenes];
+            }
+
+            const coincidencias = imagenes.match(/data:image\/[^\"'\s]+/g);
+            if (coincidencias && coincidencias.length > 0) {
+                return coincidencias;
+            }
+        }
+    }
+
+    return [];
+}
+
+function renderizarMiniaturasImagenes(imagenes, maximas) {
+    const urls = normalizarImagenesIncidente(imagenes);
+    if (urls.length === 0) {
+        return '';
+    }
+
+    const limite = Math.min(urls.length, maximas || urls.length);
+    let html = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">';
+
+    for (let i = 0; i < limite; i++) {
+        html += '<img src="' + urls[i] + '" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #004d00;">';
+    }
+
+    html += '</div>';
+    return html;
+}
+
+function renderizarFotosSeleccionadas() {
+    const preview = document.getElementById('preview_imagenes');
+    if (!preview) {
+        return;
+    }
+
+    preview.innerHTML = '';
+
+    fotosSeleccionadas.forEach(function(foto, index) {
+        const container = document.createElement('div');
+        container.className = 'foto-container';
+
+        const img = document.createElement('img');
+        img.src = foto.vistaPrevia;
+        img.alt = 'Foto seleccionada ' + (index + 1);
+
+        const btnBorrar = document.createElement('button');
+        btnBorrar.innerHTML = 'X';
+        btnBorrar.type = 'button';
+        btnBorrar.className = 'foto-borrar';
+        btnBorrar.onclick = function() {
+            eliminarFoto(index);
+        };
+
+        container.appendChild(img);
+        container.appendChild(btnBorrar);
+        preview.appendChild(container);
+    });
+}
+
+async function manejarSeleccionFotos(event) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        showMessage('Debes iniciar sesion para reportar un incidente', 'error');
+        event.target.value = '';
+        return;
+    }
+
+    const archivos = Array.from(event.target.files || []);
+    if (archivos.length === 0) {
+        return;
+    }
+
+    const seleccionKey = archivos.map(function(archivo) {
+        return [archivo.name, archivo.size, archivo.lastModified].join(':');
+    }).join('|');
+
+    if (event.target.dataset.lastSelectionKey === seleccionKey) {
+        return;
+    }
+
+    event.target.dataset.lastSelectionKey = seleccionKey;
+
+    const espacioDisponible = 3 - fotosSeleccionadas.length;
+    if (espacioDisponible <= 0) {
+        showMessage('Solo puedes subir maximo 3 fotos', 'error');
+        event.target.value = '';
+        return;
+    }
+
+    const archivosPermitidos = archivos.slice(0, espacioDisponible);
+    for (const archivo of archivosPermitidos) {
+        await agregarFoto(archivo, true);
+    }
+
+    renderizarFotosSeleccionadas();
+
+    if (archivos.length > espacioDisponible) {
+        showMessage('Solo puedes subir maximo 3 fotos', 'error');
+    }
+
+    event.target.value = '';
+}
+
+function agregarFoto(file, omitirRender) {
+    return new Promise(function(resolve) {
+        if (!file.type.startsWith('image/')) {
+            showMessage('Solo se permiten imagenes', 'error');
+            resolve(false);
+            return;
+        }
+        
+        if (fotosSeleccionadas.length >= 3) {
+            showMessage('Solo puedes tomar maximo 3 fotos', 'error');
+            resolve(false);
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function() {
+            fotosSeleccionadas.push({
+                archivo: file,
+                vistaPrevia: reader.result
+            });
+
+            if (!omitirRender) {
+                renderizarFotosSeleccionadas();
+            }
+
+            resolve(true);
+        };
+
+        reader.onerror = function() {
+            showMessage('No se pudo cargar la vista previa de la imagen', 'error');
+            resolve(false);
+        };
+
+        reader.readAsDataURL(file);
+    });
+}
+
+function eliminarFoto(index) {
+    fotosSeleccionadas.splice(index, 1);
+
+    renderizarFotosSeleccionadas();
+}
+
 async function reportarIncidente(event) {
     event.preventDefault();
-    console.log('reportarIncidente: inicio');
     
     const token = localStorage.getItem('token');
-    console.log('reportarIncidente: token=', token);
     if (!token) {
         showMessage('Debes iniciar sesion', 'error');
         return;
@@ -28,19 +194,20 @@ async function reportarIncidente(event) {
     }
     
     if (isNaN(latitud) || isNaN(longitud) || latitud === 0 || longitud === 0) {
-        showMessage('Debes obtener tu ubicacion actual usando el boton "Obtener mi ubicacion actual"', 'error');
+        showMessage('Debes obtener tu ubicacion actual', 'error');
         return;
     }
     
     if (!direccion) {
-        showMessage('La direccion se obtendra al obtener la ubicacion. Espera un momento.', 'error');
+        showMessage('La direccion se obtendra al obtener la ubicacion', 'error');
         return;
     }
     
-    const imagenes = [];
+    const imagenesBase64 = [];
     
     for (let i = 0; i < fotosSeleccionadas.length; i++) {
-        imagenes.push(fotosSeleccionadas[i]);
+        const base64 = await convertirArchivoABase64(fotosSeleccionadas[i].archivo);
+        imagenesBase64.push(base64);
     }
     
     const data = {
@@ -49,11 +216,10 @@ async function reportarIncidente(event) {
         latitud: latitud,
         longitud: longitud,
         direccion: direccion,
-        imagenes: imagenes
+        imagenes: imagenesBase64
     };
     
     try {
-        console.log('reportarIncidente: enviando datos', data);
         const response = await fetch('/api/reportar-incidente', {
             method: 'POST',
             headers: {
@@ -63,11 +229,11 @@ async function reportarIncidente(event) {
             body: JSON.stringify(data)
         });
         const result = await response.json();
-        console.log('reportarIncidente: respuesta', response.status, result);
         if (response.ok) {
             showMessage('Incidente reportado exitosamente', 'success');
             document.getElementById('reporteForm').reset();
-            document.getElementById('preview_imagenes').innerHTML = '';
+            const previewDiv = document.getElementById('preview_imagenes');
+            if (previewDiv) previewDiv.innerHTML = '';
             document.getElementById('direccion').value = '';
             document.getElementById('latitud').value = '';
             document.getElementById('longitud').value = '';
@@ -76,11 +242,21 @@ async function reportarIncidente(event) {
             if (typeof cargarIncidentesPreview === 'function') cargarIncidentesPreview();
             mostrarPagina('mapa');
         } else {
-            showMessage(result.detail, 'error');
+            showMessage(result.detail || 'Error al reportar', 'error');
         }
     } catch (error) {
+        console.error('Error:', error);
         showMessage('Error al reportar incidente', 'error');
     }
+}
+
+function convertirArchivoABase64(file) {
+    return new Promise(function(resolve, reject) {
+        const reader = new FileReader();
+        reader.onloadend = function() { resolve(reader.result); };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 }
 
 async function cargarIncidentesPreview() {
@@ -100,20 +276,12 @@ async function cargarIncidentesPreview() {
         
         for (let i = 0; i < Math.min(incidentes.length, 6); i++) {
             const inc = incidentes[i];
-            let imagenHtml = '';
-            if (inc.imagenes) {
-                if (typeof inc.imagenes === 'string') {
-                    imagenHtml = '<img src="' + inc.imagenes + '" class="incidente-imagen">';
-                } else if (inc.imagenes.length > 0 && inc.imagenes[0]) {
-                    imagenHtml = '<img src="' + inc.imagenes[0] + '" class="incidente-imagen">';
-                }
-            }
+            const imagenesHtml = renderizarMiniaturasImagenes(inc.imagenes, 3);
             
             const card = document.createElement('div');
             card.className = 'incidente-card';
             card.onclick = function() { mostrarDetalleIncidente(inc); };
-            card.innerHTML = `
-                ${imagenHtml}
+            card.innerHTML = imagenesHtml + `
                 <div class="incidente-titulo">${inc.tipo_delito}</div>
                 <div class="incidente-descripcion">${inc.descripcion ? inc.descripcion.substring(0, 100) : ''}...</div>
                 <div class="incidente-fecha">${new Date(inc.creado_en).toLocaleDateString()}</div>
@@ -141,20 +309,12 @@ async function cargarTodosIncidentes() {
         }
         
         incidentes.forEach(function(inc) {
-            let imagenHtml = '';
-            if (inc.imagenes) {
-                if (typeof inc.imagenes === 'string') {
-                    imagenHtml = '<img src="' + inc.imagenes + '" class="incidente-imagen">';
-                } else if (inc.imagenes.length > 0 && inc.imagenes[0]) {
-                    imagenHtml = '<img src="' + inc.imagenes[0] + '" class="incidente-imagen">';
-                }
-            }
+            const imagenesHtml = renderizarMiniaturasImagenes(inc.imagenes, 3);
             
             const card = document.createElement('div');
             card.className = 'incidente-card';
             card.onclick = function() { mostrarDetalleIncidente(inc); };
-            card.innerHTML = `
-                ${imagenHtml}
+            card.innerHTML = imagenesHtml + `
                 <div class="incidente-titulo">${inc.tipo_delito}</div>
                 <div class="incidente-descripcion">${inc.descripcion}</div>
                 <div class="incidente-fecha">${new Date(inc.creado_en).toLocaleString()}</div>
@@ -189,20 +349,12 @@ async function cargarMisIncidentes() {
         }
         
         incidentes.forEach(function(inc) {
-            let imagenHtml = '';
-            if (inc.imagenes) {
-                if (typeof inc.imagenes === 'string') {
-                    imagenHtml = '<img src="' + inc.imagenes + '" class="incidente-imagen">';
-                } else if (inc.imagenes.length > 0 && inc.imagenes[0]) {
-                    imagenHtml = '<img src="' + inc.imagenes[0] + '" class="incidente-imagen">';
-                }
-            }
+            const imagenesHtml = renderizarMiniaturasImagenes(inc.imagenes, 3);
             
             const card = document.createElement('div');
             card.className = 'incidente-card';
             card.onclick = function() { mostrarDetalleIncidente(inc); };
-            card.innerHTML = `
-                ${imagenHtml}
+            card.innerHTML = imagenesHtml + `
                 <div class="incidente-titulo">${inc.tipo_delito}</div>
                 <div class="incidente-descripcion">${inc.descripcion}</div>
                 <div class="incidente-fecha">${new Date(inc.creado_en).toLocaleString()}</div>
@@ -215,87 +367,32 @@ async function cargarMisIncidentes() {
     }
 }
 
-function previewFotos(input) {
-    const preview = document.getElementById('preview_imagenes');
-    if (!preview) return;
-    preview.innerHTML = '';
-    fotosSeleccionadas = [];
+function mostrarDetalleIncidente(incidente) {
+    const modal = document.getElementById('modal-detalle');
+    const contenido = document.getElementById('modal-contenido');
     
-    const files = input.files;
-    
-    if (files.length > 3) {
-        showMessage('Solo puedes subir maximo 3 fotos', 'error');
-        input.value = '';
-        return;
+    let imagenesHtml = '';
+    const imagenes = normalizarImagenesIncidente(incidente.imagenes);
+    if (imagenes.length > 0) {
+        imagenesHtml = '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:15px;">';
+        imagenes.forEach(function(img) {
+            imagenesHtml += '<img src="' + img + '" style="width:100%;border-radius:5px;border:1px solid #004d00;">';
+        });
+        imagenesHtml += '</div>';
     }
     
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        
-        if (!file.type.startsWith('image/')) {
-            showMessage('Solo se permiten imagenes', 'error');
-            continue;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            fotosSeleccionadas.push(event.target.result);
-            
-            const container = document.createElement('div');
-            container.style.position = 'relative';
-            container.style.display = 'inline-block';
-            
-            const img = document.createElement('img');
-            img.src = event.target.result;
-            img.style.width = '80px';
-            img.style.height = '80px';
-            img.style.objectFit = 'cover';
-            img.style.borderRadius = '5px';
-            img.style.margin = '5px';
-            
-            const btnBorrar = document.createElement('button');
-            btnBorrar.innerHTML = 'X';
-            btnBorrar.style.position = 'absolute';
-            btnBorrar.style.top = '0';
-            btnBorrar.style.right = '0';
-            btnBorrar.style.backgroundColor = '#dc3545';
-            btnBorrar.style.color = 'white';
-            btnBorrar.style.border = 'none';
-            btnBorrar.style.borderRadius = '50%';
-            btnBorrar.style.width = '20px';
-            btnBorrar.style.height = '20px';
-            btnBorrar.style.fontSize = '12px';
-            btnBorrar.style.cursor = 'pointer';
-            btnBorrar.onclick = function() {
-                const idx = fotosSeleccionadas.indexOf(event.target.result);
-                if (idx > -1) {
-                    fotosSeleccionadas.splice(idx, 1);
-                }
-                container.remove();
-                
-                const dataTransfer = new DataTransfer();
-                const remainingFiles = [];
-                for (let j = 0; j < input.files.length; j++) {
-                    if (j !== idx) {
-                        remainingFiles.push(input.files[j]);
-                    }
-                }
-                for (let j = 0; j < remainingFiles.length; j++) {
-                    dataTransfer.items.add(remainingFiles[j]);
-                }
-                input.files = dataTransfer.files;
-            };
-            
-            container.appendChild(img);
-            container.appendChild(btnBorrar);
-            preview.appendChild(container);
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-if (document.getElementById('imagenes')) {
-    document.getElementById('imagenes').addEventListener('change', function(e) {
-        previewFotos(this);
-    });
+    const fecha = new Date(incidente.creado_en).toLocaleString();
+    
+    contenido.innerHTML = `
+        <h3>${incidente.tipo_delito.toUpperCase()}</h3>
+        <p><strong>Descripcion:</strong> ${incidente.descripcion}</p>
+        <p><strong>Direccion:</strong> ${incidente.direccion}</p>
+        <p><strong>Coordenadas:</strong> ${incidente.latitud}, ${incidente.longitud}</p>
+        <p><strong>Reportado por:</strong> ${incidente.vecino_nombre || 'Vecino'} ${incidente.vecino_apellido || ''}</p>
+        <p><strong>Estado:</strong> ${incidente.estado}</p>
+        <p><strong>Fecha:</strong> ${fecha}</p>
+        ${imagenesHtml}
+    `;
+    
+    modal.style.display = 'flex';
 }

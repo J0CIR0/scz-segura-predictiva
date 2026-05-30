@@ -4,6 +4,49 @@ let heatLayer = null;
 let ubicacionSeleccionada = null;
 let currentUserRol = null;
 
+function normalizarImagenesIncidente(imagenes) {
+    if (!imagenes) {
+        return [];
+    }
+
+    if (Array.isArray(imagenes)) {
+        return imagenes.filter(function(img) {
+            return typeof img === 'string' && img.length > 0;
+        });
+    }
+
+    if (typeof imagenes === 'string') {
+        try {
+            const parsed = JSON.parse(imagenes);
+            if (Array.isArray(parsed)) {
+                return parsed.filter(function(img) {
+                    return typeof img === 'string' && img.length > 0;
+                });
+            }
+        } catch (error) {
+            if (imagenes.startsWith('data:image')) {
+                return [imagenes];
+            }
+        }
+    }
+
+    return [];
+}
+
+function renderizarImagenesIncidente(imagenes) {
+    const urls = normalizarImagenesIncidente(imagenes);
+    if (urls.length === 0) {
+        return '';
+    }
+
+    let html = '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:15px;">';
+    urls.forEach(function(img) {
+        html += '<img src="' + img + '" style="width:100%;border-radius:5px;border:1px solid #004d00;">';
+    });
+    html += '</div>';
+    return html;
+}
+
 function showMessage(text, type) {
     const msgDiv = document.getElementById('message');
     msgDiv.textContent = text;
@@ -131,16 +174,7 @@ function mostrarDetalleIncidente(incidente) {
     const modal = document.getElementById('modal-detalle');
     const contenido = document.getElementById('modal-contenido');
     
-    let imagenesHtml = '';
-    if (incidente.imagenes) {
-        if (Array.isArray(incidente.imagenes) && incidente.imagenes.length > 0) {
-            incidente.imagenes.forEach(img => {
-                imagenesHtml += `<img src="${img}" style="width:100%;margin-bottom:10px;border-radius:5px;">`;
-            });
-        } else if (typeof incidente.imagenes === 'string' && incidente.imagenes.length > 0) {
-            imagenesHtml = `<img src="${incidente.imagenes}" style="width:100%;border-radius:5px;">`;
-        }
-    }
+    const imagenesHtml = renderizarImagenesIncidente(incidente.imagenes);
     
     const fecha = new Date(incidente.creado_en).toLocaleString();
     
@@ -393,16 +427,7 @@ async function mostrarDetalleIncidentePolicia(incidente) {
     const modal = document.getElementById('modal-detalle');
     const contenido = document.getElementById('modal-contenido');
     
-    let imagenesHtml = '';
-    if (incidente.imagenes) {
-        if (Array.isArray(incidente.imagenes) && incidente.imagenes.length > 0) {
-            incidente.imagenes.forEach(img => {
-                imagenesHtml += `<img src="${img}" style="width:100%;margin-bottom:10px;border-radius:5px;">`;
-            });
-        } else if (typeof incidente.imagenes === 'string' && incidente.imagenes.length > 0) {
-            imagenesHtml = `<img src="${incidente.imagenes}" style="width:100%;border-radius:5px;">`;
-        }
-    }
+    const imagenesHtml = renderizarImagenesIncidente(incidente.imagenes);
     
     contenido.innerHTML = `
         <h3>${incidente.tipo_delito.toUpperCase()}</h3>
@@ -427,16 +452,7 @@ async function mostrarAsignarIncidente(incidente) {
     const modal = document.getElementById('modal-detalle');
     const contenido = document.getElementById('modal-contenido');
     
-    let imagenesHtml = '';
-    if (incidente.imagenes) {
-        if (Array.isArray(incidente.imagenes) && incidente.imagenes.length > 0) {
-            incidente.imagenes.forEach(img => {
-                imagenesHtml += `<img src="${img}" style="width:100%;margin-bottom:10px;border-radius:5px;">`;
-            });
-        } else if (typeof incidente.imagenes === 'string' && incidente.imagenes.length > 0) {
-            imagenesHtml = `<img src="${incidente.imagenes}" style="width:100%;border-radius:5px;">`;
-        }
-    }
+    const imagenesHtml = renderizarImagenesIncidente(incidente.imagenes);
     
     contenido.innerHTML = `
         <h3>${incidente.tipo_delito.toUpperCase()}</h3>

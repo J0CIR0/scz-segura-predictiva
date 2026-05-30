@@ -110,8 +110,9 @@
                         <input type="text" id="longitud" readonly placeholder="Esperando ubicacion...">
                     </div>
                     <div class="form-group">
-                        <label>Fotos del Incidente (maximo 3):</label>
-                        <input type="file" id="imagenes" accept="image/*" multiple>
+                        <label>Fotos del Incidente (maximo 3 fotos):</label>
+                        <input type="file" id="btn-tomar-foto" class="foto-input" accept="image/*" multiple>
+                        <small style="display:block;margin-top:6px;color:#666;">Toca para elegir fotos desde tu celular, igual que en laptop. Puedes repetir hasta 3 veces.</small>
                         <div id="preview_imagenes" class="preview-imagenes"></div>
                     </div>
                     <button type="submit" id="btn-reportar" disabled>Reportar Incidente</button>

@@ -1,4 +1,5 @@
 import mysql.connector
+from mysql.connector import pooling
 import os
 from dotenv import load_dotenv
 import pathlib
@@ -12,14 +13,29 @@ class Database:
         self.user = os.getenv("DB_USER")
         self.password = os.getenv("DB_PASSWORD")
         self.database = os.getenv("DB_NAME")
-        print(f"Conectando a BD: host={self.host}, user={self.user}, db={self.database}")
+        self.pool = None
+        self._create_pool()
+    
+    def _create_pool(self):
+        try:
+            self.pool = pooling.MySQLConnectionPool(
+                pool_name="mypool",
+                pool_size=10,
+                pool_reset_session=True,
+                host=self.host,
+                user=self.user,
+                password=self.password,
+                database=self.database,
+                autocommit=False,
+                use_pure=True
+            )
+            print(f"Pool de conexiones creado: host={self.host}, db={self.database}")
+        except Exception as e:
+            print(f"Error creando pool: {e}")
     
     def get_connection(self):
-        return mysql.connector.connect(
-            host=self.host,
-            user=self.user,
-            password=self.password,
-            database=self.database
-        )
+        if self.pool is None:
+            self._create_pool()
+        return self.pool.get_connection()
 
 db = Database()
