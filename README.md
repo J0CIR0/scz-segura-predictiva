@@ -76,7 +76,6 @@ scz_segura_predictiva/
 ├── incidentes.js CRUD incidentes
 └── app.js Inicializacion
 
-text
 
 ## Instalacion
 
