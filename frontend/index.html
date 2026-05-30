@@ -23,6 +23,7 @@
     <div id="auth-nav" class="navbar" style="display: none;">
         <div class="user-info">
             <span>Bienvenido, <span id="user-name">Vecino</span></span>
+            <span id="user-rol" class="user-rol"></span>
             <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
         </div>
         <div class="nav-links">
@@ -30,6 +31,7 @@
             <button onclick="mostrarPagina('incidentes')">Incidentes</button>
             <button onclick="mostrarPagina('reportar')">Reportar</button>
             <button onclick="mostrarPagina('mis-reportes')">Mis Reportes</button>
+            <button id="btn-admin" onclick="mostrarPagina('admin')" style="display: none;">Panel Admin</button>
         </div>
     </div>
     
