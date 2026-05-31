@@ -1,5 +1,33 @@
+function setSubmitButtonState(formId, isLoading, loadingText) {
+    const form = document.getElementById(formId);
+    if (!form) return null;
+
+    const button = form.querySelector('button[type="submit"]');
+    if (!button) return null;
+
+    if (isLoading) {
+        if (!button.dataset.originalText) {
+            button.dataset.originalText = button.textContent;
+        }
+        button.disabled = true;
+        if (loadingText) {
+            button.textContent = loadingText;
+        }
+    } else {
+        button.disabled = false;
+        if (button.dataset.originalText) {
+            button.textContent = button.dataset.originalText;
+            delete button.dataset.originalText;
+        }
+    }
+
+    return button;
+}
+
 async function registrarUsuario(event) {
     event.preventDefault();
+    setSubmitButtonState('registroForm', true, 'Registrando...');
+
     const data = {
         ci: document.getElementById('reg_ci').value,
         nombre: document.getElementById('reg_nombre').value,
@@ -19,13 +47,21 @@ async function registrarUsuario(event) {
         if (response.ok) {
             showMessage(result.mensaje, 'success');
             document.getElementById('registroForm').reset();
+            const verEmail = document.getElementById('ver_email');
+            if (verEmail) {
+                verEmail.value = data.email;
+            }
+            mostrarPagina('registro');
         } else {
             showMessage(result.detail, 'error');
         }
     } catch (error) {
         showMessage('Error en el registro', 'error');
+    } finally {
+        setSubmitButtonState('registroForm', false);
     }
 }
+
 
 async function verificarCodigo(event) {
     event.preventDefault();
@@ -44,6 +80,7 @@ async function verificarCodigo(event) {
         if (response.ok) {
             showMessage(result.mensaje, 'success');
             document.getElementById('verificarForm').reset();
+            mostrarPagina('login');
         } else {
             showMessage(result.detail, 'error');
         }
@@ -54,6 +91,8 @@ async function verificarCodigo(event) {
 
 async function loginUsuario(event) {
     event.preventDefault();
+    setSubmitButtonState('loginForm', true, 'Ingresando...');
+
     const email = document.getElementById('login_email').value;
     const password = document.getElementById('login_contrasena').value;
     
@@ -72,8 +111,12 @@ async function loginUsuario(event) {
                 localStorage.setItem('userRol', result.rol);
                 localStorage.setItem('userId', result.id);
                 
-                disconnectWebSocket();
-                connectWebSocket();
+                if (typeof disconnectWebSocket === 'function') {
+                    disconnectWebSocket();
+                }
+                if (typeof connectWebSocket === 'function') {
+                    connectWebSocket();
+                }
                 
                 let redirectPage = '';
                 switch(result.rol) {
@@ -101,6 +144,8 @@ async function loginUsuario(event) {
         }
     } catch (error) {
         showMessage('Error en el login', 'error');
+    } finally {
+        setSubmitButtonState('loginForm', false);
     }
 }
 
@@ -169,6 +214,8 @@ async function cerrarSesion() {
     localStorage.removeItem('userName');
     localStorage.removeItem('userRol');
     localStorage.removeItem('userId');
-    disconnectWebSocket();
+    if (typeof disconnectWebSocket === 'function') {
+        disconnectWebSocket();
+    }
     window.location.href = '/';
 }

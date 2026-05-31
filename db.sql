@@ -15,7 +15,6 @@ create table usuarios (
     rol enum('vecino', 'admin_junta', 'policia', 'superadmin') not null default 'vecino',
     esta_verificado boolean default false,
     activo boolean default false,
-    active_session_token varchar(255) null,
     codigo_verificacion varchar(6),
     token_recuperacion varchar(255) null,
     token_recuperacion_expiracion datetime null,
@@ -115,6 +114,7 @@ values ('4444444', 'Admin', 'Super', 'super@test.com', '74444444', '$2b$12$Mj1ZB
 select id, nombre, email, rol from usuarios;
 
 use scz_segura_predictiva;
-select * from incidentes;
+select * from usuarios;
 
 SET GLOBAL max_allowed_packet = 268435456;
+ALTER TABLE usuarios ADD COLUMN active_session_token VARCHAR(255) NULL;

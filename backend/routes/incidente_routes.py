@@ -1,3 +1,4 @@
+# backend/routes/incidente_routes.py
 from fastapi import APIRouter, HTTPException, Depends, Request
 from backend.schemas.incidente_schemas import reporte_incidente
 from backend.utils.auth_utils import auth_service
@@ -34,7 +35,7 @@ def normalizar_imagenes_guardadas(valor):
 def reportar_incidente(
     incidente: reporte_incidente, 
     request: Request,
-    current_user: dict = Depends(auth_service.get_current_user_with_session_check)
+    current_user: dict = Depends(auth_service.get_current_user)
 ):
     usuario_id = current_user.get("id")
     
@@ -85,7 +86,7 @@ def reportar_incidente(
             conn.close()
 
 @router.get("/incidentes")
-def listar_incidentes(current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
+def listar_incidentes(current_user: dict = Depends(auth_service.get_current_user)):
     conn = db.get_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -121,7 +122,7 @@ def listar_incidentes_publicos():
                u.nombre as vecino_nombre, u.apellido as vecino_apellido
         from incidentes i
         join usuarios u on i.usuario_id = u.id
-        where i.estado = 'pendiente'
+        where i.estado = 'pendiente' or i.estado = 'en_proceso'
         order by i.creado_en desc
         limit 50
     """)
@@ -136,7 +137,7 @@ def listar_incidentes_publicos():
     return {"incidentes": incidentes}
 
 @router.get("/mis-incidentes")
-def mis_incidentes(current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
+def mis_incidentes(current_user: dict = Depends(auth_service.get_current_user)):
     usuario_id = current_user.get("id")
     if not usuario_id:
         raise HTTPException(status_code=401, detail="usuario no autenticado")

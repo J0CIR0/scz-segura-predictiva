@@ -22,10 +22,10 @@
     
     <div id="public-nav" class="navbar" style="display: flex;">
         <div class="nav-links">
-            <button onclick="mostrarPagina('mapa')">Mapa de Calor</button>
-            <button onclick="mostrarPagina('incidentes')">Incidentes</button>
-            <button onclick="mostrarPagina('login')">Iniciar Sesión</button>
-            <button onclick="mostrarPagina('registro')">Registrarse</button>
+            <button type="button" onclick="mostrarPagina('mapa')">Mapa de Calor</button>
+            <button type="button" onclick="mostrarPagina('incidentes')">Incidentes</button>
+            <button type="button" onclick="mostrarPagina('login')">Iniciar Sesión</button>
+            <button type="button" onclick="mostrarPagina('registro')">Registrarse</button>
         </div>
     </div>
     
@@ -53,7 +53,7 @@
         <div id="pagina-login" class="page">
             <div class="form-container">
                 <h2>Iniciar Sesión</h2>
-                <form id="loginForm">
+                <form id="loginForm" onsubmit="loginUsuario(event)">
                     <div class="form-group">
                         <label>Email:</label>
                         <input type="email" id="login_email" required>
@@ -73,7 +73,7 @@
         <div id="pagina-registro" class="page">
             <div class="form-container">
                 <h2>Registro de Usuario</h2>
-                <form id="registroForm">
+                <form id="registroForm" onsubmit="registrarUsuario(event)">
                     <div class="form-group">
                         <label>CI:</label>
                         <input type="text" id="reg_ci" required>
@@ -101,13 +101,13 @@
                     <button type="submit">Registrarse</button>
                 </form>
                 <div class="auth-link">
-                    <a onclick="mostrarPagina('verificar')">¿Ya tienes código de verificación?</a>
+                    <a onclick="document.getElementById('ver_email').focus();">¿Ya tienes código de verificación?</a>
                 </div>
             </div>
             
             <div class="form-container">
                 <h2>Verificar Código</h2>
-                <form id="verificarForm">
+                <form id="verificarForm" onsubmit="verificarCodigo(event)">
                     <div class="form-group">
                         <label>Email:</label>
                         <input type="email" id="ver_email" required>
@@ -124,7 +124,7 @@
         <div id="pagina-recuperar" class="page">
             <div class="form-container">
                 <h2>Recuperar Contraseña</h2>
-                <form id="solicitarRecuperacionForm">
+                <form id="solicitarRecuperacionForm" onsubmit="solicitarRecuperacion(event)">
                     <div class="form-group">
                         <label>Email:</label>
                         <input type="email" id="rec_email" required>
@@ -135,7 +135,7 @@
             
             <div class="form-container">
                 <h2>Cambiar Contraseña</h2>
-                <form id="cambiarContrasenaForm">
+                <form id="cambiarContrasenaForm" onsubmit="cambiarContrasena(event)">
                     <div class="form-group">
                         <label>Email:</label>
                         <input type="email" id="cambio_email" required>
@@ -164,8 +164,8 @@
     <script src="/static/js/config.js"></script>
     <script src="/static/js/ui-public.js"></script>
     <script src="/static/js/mapa.js"></script>
+    <script src="/static/js/websocket.js"></script>
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/incidentes.js"></script>
-    <script src="/static/js/app-public.js"></script>
 </body>
 </html>

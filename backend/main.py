@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.routes import auth_routes, incidente_routes, admin_routes, policia_routes
 from backend.utils.auth_utils import auth_service
 from backend.utils.websocket_manager import manager
-import os
 import pathlib
 
 app = FastAPI()

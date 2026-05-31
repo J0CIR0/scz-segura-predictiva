@@ -30,11 +30,11 @@ def registrar_usuario(usuario: registro_usuario):
     
     cursor.execute("""
         insert into usuarios (ci, nombre, apellido, email, telefono, contra, rol, codigo_verificacion,
-                             numero_placa, ubicacion_vivienda, telefono_emergencia, direccion_puesto, activo)
-        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                             numero_placa, ubicacion_vivienda, telefono_emergencia, direccion_puesto, activo, esta_verificado)
+        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """, (usuario.ci, usuario.nombre, usuario.apellido, usuario.email, usuario.telefono, 
           password_hash, rol, codigo, usuario.numero_placa, usuario.ubicacion_vivienda,
-          usuario.telefono_emergencia, usuario.direccion_puesto, False))
+          usuario.telefono_emergencia, usuario.direccion_puesto, False, False))
     
     conn.commit()
     cursor.close()
@@ -79,8 +79,8 @@ def login(data: login_usuario):
     cursor = conn.cursor(dictionary=True)
     
     cursor.execute("""
-        select id, contra, esta_verificado, rol, nombre, apellido,
-               numero_placa, ubicacion_vivienda, telefono_emergencia, direccion_puesto, activo
+        select id, contra, esta_verificado, rol, nombre, apellido, activo, active_session_token,
+               numero_placa, ubicacion_vivienda, telefono_emergencia, direccion_puesto
         from usuarios where email = %s
     """, (data.email,))
     usuario = cursor.fetchone()
@@ -100,22 +100,26 @@ def login(data: login_usuario):
         conn.close()
         raise HTTPException(status_code=401, detail="Verifica tu cuenta primero")
     
+    if usuario["activo"]:
+        cursor.close()
+        conn.close()
+        raise HTTPException(status_code=409, detail="Ya tienes una sesion activa en otro dispositivo. Cierra esa sesion primero para iniciar aqui.")
+    
     user_id = usuario["id"]
     user_rol = usuario["rol"]
     user_nombre = usuario["nombre"]
     user_apellido = usuario["apellido"]
     
+    new_session_token = auth_service.generate_session_token()
+    
+    cursor.execute(
+        "UPDATE usuarios SET active_session_token = %s, activo = TRUE WHERE id = %s",
+        (new_session_token, user_id)
+    )
+    conn.commit()
+    
     cursor.close()
     conn.close()
-    
-    new_session_token = auth_service.generate_session_token()
-    pudo_activar = auth_service.activate_session_if_available(user_id, new_session_token)
-
-    if not pudo_activar:
-        raise HTTPException(
-            status_code=409,
-            detail="Tu cuenta ya tiene una sesion activa en otro dispositivo. Cierra esa sesion primero para iniciar aqui."
-        )
     
     token = auth_service.create_full_token(
         user_id=user_id,
@@ -144,23 +148,25 @@ def login(data: login_usuario):
         "rol": user_rol,
         "nombre": user_nombre,
         "apellido": user_apellido,
+        "id": user_id,
         "perfil": perfil_data
     }
 
-@router.post("/force-login")
-async def force_login():
-    raise HTTPException(
-        status_code=403,
-        detail="Inicio forzado deshabilitado: solo se permite una sesion activa por usuario."
-    )
-
 @router.post("/logout")
-def logout(current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
-    auth_service.deactivate_session(current_user["id"])
+def logout(current_user: dict = Depends(auth_service.get_current_user)):
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE usuarios SET active_session_token = NULL, activo = FALSE WHERE id = %s",
+        (current_user["id"],)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
     return {"mensaje": "Sesion cerrada exitosamente"}
 
 @router.put("/perfil")
-def actualizar_perfil_usuario(datos: actualizar_perfil, current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
+def actualizar_perfil_usuario(datos: actualizar_perfil, current_user: dict = Depends(auth_service.get_current_user)):
     conn = db.get_connection()
     cursor = conn.cursor()
     
@@ -199,7 +205,7 @@ def actualizar_perfil_usuario(datos: actualizar_perfil, current_user: dict = Dep
     return {"mensaje": "perfil actualizado exitosamente"}
 
 @router.get("/perfil")
-def obtener_perfil(current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
+def obtener_perfil(current_user: dict = Depends(auth_service.get_current_user)):
     conn = db.get_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -246,7 +252,7 @@ def solicitar_recuperacion(data: solicitar_recuperacion):
     return {"mensaje": "codigo de recuperacion enviado a tu correo"}
 
 @router.post("/cambiar-contrasena")
-async def cambiar_contrasena(data: cambiar_contrasena):
+def cambiar_contrasena(data: cambiar_contrasena):
     conn = db.get_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -272,15 +278,12 @@ async def cambiar_contrasena(data: cambiar_contrasena):
     
     cursor.execute("""
         UPDATE usuarios 
-        SET contra = %s, token_recuperacion = null, token_recuperacion_expiracion = null, active_session_token = null, activo = FALSE 
+        SET contra = %s, token_recuperacion = null, token_recuperacion_expiracion = null, active_session_token = null, activo = FALSE
         WHERE id = %s
     """, (nueva_password_hash, usuario["id"]))
     
     conn.commit()
-    
-    await manager.broadcast_to_user(usuario["id"], "session_expired", {"message": "Tu contraseña fue cambiada. Tu sesion ha sido cerrada."})
-    
     cursor.close()
     conn.close()
     
-    return {"mensaje": "Contraseña actualizada exitosamente. Tu sesion ha sido cerrada."}
+    return {"mensaje": "Contraseña actualizada exitosamente"}

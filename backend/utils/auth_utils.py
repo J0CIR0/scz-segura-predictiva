@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import os
 import secrets
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi import HTTPException, Depends, Request
+from fastapi import HTTPException, Depends
 from database.db import db
 
 security = HTTPBearer()
@@ -39,7 +39,7 @@ class AuthService:
         }
         return self.create_token(payload)
     
-    def get_current_user_with_session_check(self, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    def get_current_user(self, credentials: HTTPAuthorizationCredentials = Depends(security)):
         token = credentials.credentials
         
         try:
@@ -54,7 +54,7 @@ class AuthService:
             cursor = conn.cursor(dictionary=True)
             
             cursor.execute(
-                "SELECT active_session_token, activo FROM usuarios WHERE id = %s",
+                "SELECT id, rol, esta_verificado, activo, active_session_token FROM usuarios WHERE id = %s",
                 (user_id,)
             )
             user = cursor.fetchone()
@@ -64,8 +64,11 @@ class AuthService:
             if not user:
                 raise HTTPException(status_code=401, detail="Usuario no encontrado")
             
+            if not user.get("esta_verificado"):
+                raise HTTPException(status_code=401, detail="Cuenta no verificada")
+            
             if not user.get("activo"):
-                raise HTTPException(status_code=401, detail="Sesion cerrada. Inicia sesion nuevamente.")
+                raise HTTPException(status_code=401, detail="Cuenta desactivada")
             
             active_token = user.get("active_session_token")
             
@@ -80,45 +83,28 @@ class AuthService:
         except JWTError:
             raise HTTPException(status_code=401, detail="Token invalido o expirado")
     
+    def get_current_user_optional(self, token: str = None):
+        if not token:
+            return None
+        try:
+            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
+            return payload
+        except JWTError:
+            return None
+    
     def activate_session(self, user_id: int, session_token: str) -> bool:
         conn = db.get_connection()
         cursor = conn.cursor()
         
         cursor.execute(
-            "UPDATE usuarios SET active_session_token = %s, activo = TRUE WHERE id = %s",
-            (session_token, user_id)
-        )
-        conn.commit()
-        
-        cursor.execute(
-            "SELECT activo FROM usuarios WHERE id = %s",
-            (user_id,)
-        )
-        result = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        
-        return result[0] if result else False
-
-    def activate_session_if_available(self, user_id: int, session_token: str) -> bool:
-        conn = db.get_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            """
-            UPDATE usuarios
-            SET active_session_token = %s, activo = TRUE
-            WHERE id = %s
-              AND (activo = FALSE OR activo IS NULL OR active_session_token IS NULL)
-            """,
+            "UPDATE usuarios SET active_session_token = %s, activo = TRUE WHERE id = %s AND activo = FALSE",
             (session_token, user_id)
         )
         conn.commit()
         actualizado = cursor.rowcount > 0
-
         cursor.close()
         conn.close()
-
+        
         return actualizado
     
     def deactivate_session(self, user_id: int) -> None:
@@ -140,14 +126,5 @@ class AuthService:
         cursor.close()
         conn.close()
         return result[0] if result else False
-    
-    def get_active_session_token(self, user_id: int) -> str:
-        conn = db.get_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT active_session_token FROM usuarios WHERE id = %s", (user_id,))
-        result = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        return result[0] if result else None
 
 auth_service = AuthService()

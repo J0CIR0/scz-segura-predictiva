@@ -1,3 +1,8 @@
+let mapaLeaflet = null;
+let marcadorLeaflet = null;
+let heatLayer = null;
+let ubicacionSeleccionada = null;
+
 function inicializarMapa() {
     const centroSantaCruz = [-17.783333, -63.183333];
 
@@ -68,8 +73,10 @@ function actualizarCoordenadas(lat, lng) {
 
     ubicacionSeleccionada = [lat, lng];
 
-    document.getElementById('latitud').value = latRedondeada;
-    document.getElementById('longitud').value = lngRedondeada;
+    const latInput = document.getElementById('latitud');
+    const lngInput = document.getElementById('longitud');
+    if (latInput) latInput.value = latRedondeada;
+    if (lngInput) lngInput.value = lngRedondeada;
 
     if (mapaLeaflet) {
         if (marcadorLeaflet) {
@@ -77,17 +84,14 @@ function actualizarCoordenadas(lat, lng) {
         } else {
             marcadorLeaflet = L.marker([lat, lng]).addTo(mapaLeaflet);
         }
-
         mapaLeaflet.setView([lat, lng], 17);
     }
     
     obtenerDireccionDesdeCoordenadas(lat, lng);
 
-    // Habilitar boton de reportar si existe
     const btnReportar = document.getElementById('btn-reportar');
     if (btnReportar) {
         btnReportar.disabled = false;
-        console.log('actualizarCoordenadas: habilitado btn-reportar');
     }
 }
 
@@ -95,8 +99,9 @@ async function obtenerDireccionDesdeCoordenadas(lat, lng) {
     try {
         const response = await fetch('/api/geocodificar?lat=' + lat + '&lon=' + lng);
         const data = await response.json();
-        if (data.direccion) {
-            document.getElementById('direccion').value = data.direccion;
+        const direccionInput = document.getElementById('direccion');
+        if (direccionInput && data.direccion) {
+            direccionInput.value = data.direccion;
         }
     } catch (error) {
         console.error('Error obteniendo direccion:', error);
@@ -109,7 +114,7 @@ function obtenerUbicacionManual() {
     const btnUbicacion = document.getElementById('btn-obtener-ubicacion');
     
     if (!navigator.geolocation) {
-        statusDiv.innerHTML = '<div class="message error" style="display:block;">Tu navegador no soporta geolocalizacion.</div>';
+        if (statusDiv) statusDiv.innerHTML = '<div class="message error" style="display:block;">Tu navegador no soporta geolocalizacion.</div>';
         return;
     }
     
@@ -118,16 +123,14 @@ function obtenerUbicacionManual() {
         btnUbicacion.textContent = 'Obteniendo ubicacion...';
     }
     
-    statusDiv.innerHTML = '<div class="message success" style="display:block;">Solicitando permiso para acceder a tu ubicacion...</div>';
-    console.log('obtenerUbicacionManual: solicitando permiso de geolocalizacion');
+    if (statusDiv) statusDiv.innerHTML = '<div class="message success" style="display:block;">Solicitando permiso para acceder a tu ubicacion...</div>';
     
     navigator.geolocation.getCurrentPosition(
         function(position) {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             
-            statusDiv.innerHTML = '<div class="message success" style="display:block;">Ubicacion obtenida correctamente!</div>';
-            console.log('obtenerUbicacionManual: ubicacion obtenida', lat, lng);
+            if (statusDiv) statusDiv.innerHTML = '<div class="message success" style="display:block;">Ubicacion obtenida correctamente!</div>';
             
             actualizarCoordenadas(lat, lng);
             
@@ -138,13 +141,11 @@ function obtenerUbicacionManual() {
             }
             
             setTimeout(function() {
-                statusDiv.innerHTML = '';
+                if (statusDiv) statusDiv.innerHTML = '';
             }, 3000);
         },
         function(error) {
-            console.error('obtenerUbicacionManual: error', error);
             let mensaje = '';
-            
             switch(error.code) {
                 case error.PERMISSION_DENIED:
                     mensaje = 'Permiso denegado. Debes habilitar la ubicacion en tu navegador.';
@@ -159,7 +160,7 @@ function obtenerUbicacionManual() {
                     mensaje = 'Error desconocido.';
             }
             
-            statusDiv.innerHTML = '<div class="message error" style="display:block;">' + mensaje + '</div>';
+            if (statusDiv) statusDiv.innerHTML = '<div class="message error" style="display:block;">' + mensaje + '</div>';
             if (btnUbicacion) {
                 btnUbicacion.disabled = false;
                 btnUbicacion.textContent = 'Obtener mi ubicacion actual';
@@ -178,10 +179,4 @@ function centrarMapaEnSantaCruz() {
     if (mapaLeaflet) {
         mapaLeaflet.setView(santaCruz, 13);
     }
-}
-
-if (document.getElementById('btn-obtener-ubicacion')) {
-    document.getElementById('btn-obtener-ubicacion').addEventListener('click', function() {
-        obtenerUbicacionManual();
-    });
 }
