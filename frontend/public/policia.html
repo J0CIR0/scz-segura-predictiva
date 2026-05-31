@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Panel Policía - SCZ Segura Predictiva</title>
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/mapa.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>SCZ Segura Predictiva</h1>
+        <p>Panel Policial - Santa Cruz, Bolivia</p>
+    </div>
+    
+    <div id="message" class="message"></div>
+    
+    <div class="navbar">
+        <div class="user-info">
+            <span>Bienvenido, <span id="user-name">Policía</span></span>
+            <span id="user-rol" class="user-rol">(Policía)</span>
+            <span id="user-placa" class="user-placa"></span>
+            <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+        <div class="nav-links">
+            <button onclick="mostrarPagina('asignados')">Mis Incidentes Asignados</button>
+            <button onclick="mostrarPagina('pendientes')">Incidentes Pendientes</button>
+            <button onclick="mostrarPagina('mapa')">Mapa de Calor</button>
+            <button onclick="mostrarPagina('historial')">Historial Resueltos</button>
+            <button onclick="mostrarPagina('patrullajes')">Planificar Patrullaje</button>
+            <button onclick="mostrarPagina('perfil')">Mi Perfil</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div id="pagina-asignados" class="page active">
+            <h2>Mis Incidentes Asignados</h2>
+            <div id="policia-incidentes-asignados" class="incidentes-lista"></div>
+        </div>
+        
+        <div id="pagina-pendientes" class="page">
+            <h2>Incidentes Pendientes por Asignar</h2>
+            <div id="policia-incidentes-pendientes" class="incidentes-lista"></div>
+        </div>
+        
+        <div id="pagina-mapa" class="page">
+            <h2>Mapa de Calor de Incidentes</h2>
+            <div class="heatmap-control">
+                <div class="heatmap-legend">
+                    <div><span class="legend-color legend-rojo"></span> Alto</div>
+                    <div><span class="legend-color legend-naranja"></span> Medio-Alto</div>
+                    <div><span class="legend-color legend-amarillo"></span> Medio</div>
+                    <div><span class="legend-color legend-verde"></span> Bajo</div>
+                </div>
+            </div>
+            <div id="mapa" class="mapa-container"></div>
+            <h3>Incidentes Activos</h3>
+            <div id="incidentes-preview" class="incidentes-lista"></div>
+        </div>
+        
+        <div id="pagina-historial" class="page">
+            <h2>Historial de Incidentes Resueltos</h2>
+            <div class="filtros-historial">
+                <div class="form-group">
+                    <label>Fecha desde:</label>
+                    <input type="date" id="historial_fecha_desde">
+                </div>
+                <div class="form-group">
+                    <label>Fecha hasta:</label>
+                    <input type="date" id="historial_fecha_hasta">
+                </div>
+                <div class="form-group">
+                    <label>Tipo de delito:</label>
+                    <select id="historial_tipo">
+                        <option value="">Todos</option>
+                        <option value="robo">Robo</option>
+                        <option value="asalto">Asalto</option>
+                        <option value="sospechoso">Persona Sospechosa</option>
+                        <option value="violencia">Violencia</option>
+                    </select>
+                </div>
+                <button onclick="cargarHistorialResueltos()">Filtrar</button>
+            </div>
+            <div id="policia-incidentes-resueltos" class="incidentes-lista"></div>
+        </div>
+        
+        <div id="pagina-patrullajes" class="page">
+            <h2>Planificar Patrullaje Predictivo</h2>
+            <div class="form-container">
+                <div class="form-group">
+                    <label>Fecha del patrullaje:</label>
+                    <input type="date" id="patrullaje_fecha">
+                </div>
+                <div class="form-group">
+                    <label>Hora de inicio:</label>
+                    <input type="time" id="patrullaje_hora_inicio">
+                </div>
+                <div class="form-group">
+                    <label>Hora de fin:</label>
+                    <input type="time" id="patrullaje_hora_fin">
+                </div>
+                <div class="form-group">
+                    <label>Zona recomendada por IA:</label>
+                    <select id="patrullaje_zona">
+                        <option value="">Seleccionar zona</option>
+                        <option value="Plan 3000">Plan 3000</option>
+                        <option value="Los Lotes">Los Lotes</option>
+                        <option value="El Remanso">El Remanso</option>
+                        <option value="Villa 1° de Mayo">Villa 1° de Mayo</option>
+                        <option value="Palmar del Oratorio">Palmar del Oratorio</option>
+                        <option value="Zona Sur">Zona Sur</option>
+                        <option value="Centro">Centro</option>
+                    </select>
+                </div>
+                <button onclick="generarRecomendacionPatrullaje()">Generar Recomendación IA</button>
+                <button onclick="guardarPlanPatrullaje()" style="margin-top:10px;">Guardar Plan de Patrullaje</button>
+            </div>
+            <div id="recomendacion-ia" class="recomendacion-container" style="margin-top:20px;"></div>
+            <h3>Mis Patrullajes Programados</h3>
+            <div id="patrullajes-lista" class="incidentes-lista"></div>
+        </div>
+        
+        <div id="pagina-perfil" class="page">
+            <h2>Mi Perfil</h2>
+            <div id="perfil-info" class="perfil-container"></div>
+            <div class="form-container">
+                <h3>Actualizar Perfil</h3>
+                <form id="actualizarPerfilForm">
+                    <div class="form-group">
+                        <label>Teléfono:</label>
+                        <input type="text" id="perfil_telefono">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono Emergencia:</label>
+                        <input type="text" id="perfil_telefono_emergencia">
+                    </div>
+                    <div class="form-group">
+                        <label>Número de Placa:</label>
+                        <input type="text" id="perfil_numero_placa" readonly disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Dirección Puesto Policial:</label>
+                        <input type="text" id="perfil_direccion_puesto" readonly disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Cambiar Contraseña (opcional):</label>
+                        <input type="password" id="perfil_nueva_password" placeholder="Nueva contraseña">
+                    </div>
+                    <button type="submit">Actualizar Datos</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-detalle" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModal()">&times;</span>
+            <div id="modal-contenido"></div>
+        </div>
+    </div>
+    
+    <div id="modal-asignar" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModalAsignar()">&times;</span>
+            <div id="modal-asignar-contenido"></div>
+        </div>
+    </div>
+    
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/ui-policia.js"></script>
+    <script src="/static/js/mapa.js"></script>
+    <script src="/static/js/incidentes.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/websocket.js"></script>
+    <script src="/static/js/app-policia.js"></script>
+</body>
+</html>

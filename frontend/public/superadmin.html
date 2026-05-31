@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Panel Superadmin - SCZ Segura Predictiva</title>
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/mapa.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>SCZ Segura Predictiva</h1>
+        <p>Panel Superadministrador - Santa Cruz, Bolivia</p>
+    </div>
+    
+    <div id="message" class="message"></div>
+    
+    <div class="navbar">
+        <div class="user-info">
+            <span>Bienvenido, <span id="user-name">Superadmin</span></span>
+            <span id="user-rol" class="user-rol">(Super Administrador)</span>
+            <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+        <div class="nav-links">
+            <button onclick="mostrarPagina('usuarios')">Gestionar Usuarios</button>
+            <button onclick="mostrarPagina('estadisticas')">Estadísticas Globales</button>
+            <button onclick="mostrarPagina('logs')">Logs de Auditoría</button>
+            <button onclick="mostrarPagina('configuracion')">Configuración Sistema</button>
+            <button onclick="mostrarPagina('respaldos')">Respaldos</button>
+            <button onclick="mostrarPagina('monitoreo')">Monitoreo</button>
+            <button onclick="mostrarPagina('perfil')">Mi Perfil</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div id="pagina-usuarios" class="page active">
+            <h2>Gestión de Usuarios</h2>
+            <div class="filtros-usuarios">
+                <div class="form-group">
+                    <label>Filtrar por rol:</label>
+                    <select id="filtro_rol" onchange="cargarUsuarios()">
+                        <option value="">Todos</option>
+                        <option value="vecino">Vecino</option>
+                        <option value="admin_junta">Admin Junta</option>
+                        <option value="policia">Policía</option>
+                        <option value="superadmin">Superadmin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Buscar:</label>
+                    <input type="text" id="filtro_buscar" placeholder="Nombre, CI o Email" onkeyup="cargarUsuarios()">
+                </div>
+            </div>
+            <div id="superadmin-usuarios-lista"></div>
+        </div>
+        
+        <div id="pagina-estadisticas" class="page">
+            <h2>Estadísticas Globales del Sistema</h2>
+            <div id="superadmin-stats"></div>
+            <h3>Incidentes por Mes</h3>
+            <div id="superadmin-incidentes-mensuales"></div>
+            <h3>Tasa de Verificación de Usuarios</h3>
+            <div id="superadmin-verificacion-usuarios"></div>
+            <h3>Top Barrios con Más Incidentes</h3>
+            <div id="superadmin-top-barrios"></div>
+            <h3>Rendimiento del Sistema</h3>
+            <div id="superadmin-rendimiento"></div>
+        </div>
+        
+        <div id="pagina-logs" class="page">
+            <h2>Logs de Auditoría</h2>
+            <div class="filtros-logs">
+                <div class="form-group">
+                    <label>Fecha desde:</label>
+                    <input type="date" id="logs_fecha_desde">
+                </div>
+                <div class="form-group">
+                    <label>Fecha hasta:</label>
+                    <input type="date" id="logs_fecha_hasta">
+                </div>
+                <div class="form-group">
+                    <label>Usuario ID:</label>
+                    <input type="number" id="logs_usuario_id" placeholder="ID de usuario">
+                </div>
+                <div class="form-group">
+                    <label>Acción:</label>
+                    <input type="text" id="logs_accion" placeholder="Tipo de acción">
+                </div>
+                <button onclick="cargarLogs()">Buscar Logs</button>
+                <button onclick="exportarLogs()">Exportar Logs a CSV</button>
+            </div>
+            <div id="superadmin-logs-lista" class="logs-lista"></div>
+        </div>
+        
+        <div id="pagina-configuracion" class="page">
+            <h2>Configuración del Sistema</h2>
+            <div class="form-container">
+                <h3>Límites y Umbrales</h3>
+                <div class="form-group">
+                    <label>Límite de reportes falsos por mes (por usuario):</label>
+                    <input type="number" id="config_falsos_limite" value="10">
+                    <button onclick="guardarConfiguracion('falsos_limite')">Guardar</button>
+                </div>
+                <div class="form-group">
+                    <label>Intentos de login fallidos para bloqueo:</label>
+                    <input type="number" id="config_login_intentos" value="5">
+                    <button onclick="guardarConfiguracion('login_intentos')">Guardar</button>
+                </div>
+                <div class="form-group">
+                    <label>Radio para detección de duplicados (metros):</label>
+                    <input type="number" id="config_radio_duplicados" value="50">
+                    <button onclick="guardarConfiguracion('radio_duplicados')">Guardar</button>
+                </div>
+                <div class="form-group">
+                    <label>Tiempo para fusión de incidentes duplicados (minutos):</label>
+                    <input type="number" id="config_tiempo_duplicados" value="10">
+                    <button onclick="guardarConfiguracion('tiempo_duplicados')">Guardar</button>
+                </div>
+                
+                <h3>Modelo de IA Predictiva</h3>
+                <div class="form-group">
+                    <label>Precisión actual del modelo (%):</label>
+                    <span id="ia_precision_actual">0</span>
+                    <button onclick="reentrenarModeloIA()">Reentrenar Modelo</button>
+                </div>
+                <div class="form-group">
+                    <label>Último reentrenamiento:</label>
+                    <span id="ia_ultimo_reentrenamiento">No registrado</span>
+                </div>
+                
+                <h3>Límites de Rendimiento</h3>
+                <div class="form-group">
+                    <label>Máximo de peticiones por segundo:</label>
+                    <input type="number" id="config_max_peticiones" value="100">
+                    <button onclick="guardarConfiguracion('max_peticiones')">Guardar</button>
+                </div>
+                <div class="form-group">
+                    <label>Tiempo máximo de respuesta (segundos):</label>
+                    <input type="number" id="config_max_tiempo_respuesta" value="2" step="0.5">
+                    <button onclick="guardarConfiguracion('max_tiempo_respuesta')">Guardar</button>
+                </div>
+                
+                <h3>Notificaciones</h3>
+                <div class="form-group">
+                    <label>Intervalo de envío de alertas predictivas (horas):</label>
+                    <input type="number" id="config_alertas_intervalo" value="6">
+                    <button onclick="guardarConfiguracion('alertas_intervalo')">Guardar</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="pagina-respaldos" class="page">
+            <h2>Gestión de Respaldos</h2>
+            <div class="form-container">
+                <div class="form-group">
+                    <button onclick="realizarRespaldoManual()" style="background-color:#28a745;">Realizar Respaldo Manual</button>
+                </div>
+                <div class="form-group">
+                    <label>Programar respaldo automático cada (horas):</label>
+                    <input type="number" id="respaldo_intervalo" value="6">
+                    <button onclick="guardarConfiguracionRespaldo()">Guardar</button>
+                </div>
+            </div>
+            <h3>Historial de Respaldos</h3>
+            <div id="respaldos-lista"></div>
+        </div>
+        
+        <div id="pagina-monitoreo" class="page">
+            <h2>Monitoreo del Sistema</h2>
+            <div id="monitoreo-stats" class="monitoreo-grid">
+                <div class="monitoreo-card">
+                    <h3>Estado del Servidor</h3>
+                    <div id="servidor-estado"></div>
+                </div>
+                <div class="monitoreo-card">
+                    <h3>Usuarios Conectados</h3>
+                    <div id="usuarios-conectados"></div>
+                </div>
+                <div class="monitoreo-card">
+                    <h3>Peticiones por Segundo</h3>
+                    <div id="peticiones-por-segundo"></div>
+                </div>
+                <div class="monitoreo-card">
+                    <h3>Tiempo Promedio de Respuesta</h3>
+                    <div id="tiempo-respuesta"></div>
+                </div>
+                <div class="monitoreo-card">
+                    <h3>Uso de Memoria</h3>
+                    <div id="uso-memoria"></div>
+                </div>
+                <div class="monitoreo-card">
+                    <h3>Estado Base de Datos</h3>
+                    <div id="db-estado"></div>
+                </div>
+            </div>
+            <button onclick="refrescarMonitoreo()">Refrescar Datos</button>
+        </div>
+        
+        <div id="pagina-perfil" class="page">
+            <h2>Mi Perfil</h2>
+            <div id="perfil-info" class="perfil-container"></div>
+            <div class="form-container">
+                <h3>Actualizar Perfil</h3>
+                <form id="actualizarPerfilForm">
+                    <div class="form-group">
+                        <label>Teléfono:</label>
+                        <input type="text" id="perfil_telefono">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono Emergencia:</label>
+                        <input type="text" id="perfil_telefono_emergencia">
+                    </div>
+                    <div class="form-group">
+                        <label>Número de Placa:</label>
+                        <input type="text" id="perfil_numero_placa" readonly disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Cambiar Contraseña (opcional):</label>
+                        <input type="password" id="perfil_nueva_password" placeholder="Nueva contraseña">
+                    </div>
+                    <button type="submit">Actualizar Datos</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-detalle" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModal()">&times;</span>
+            <div id="modal-contenido"></div>
+        </div>
+    </div>
+    
+    <div id="modal-editar-usuario" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModalEditarUsuario()">&times;</span>
+            <div id="modal-editar-usuario-contenido"></div>
+        </div>
+    </div>
+    
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/ui-superadmin.js"></script>
+    <script src="/static/js/mapa.js"></script>
+    <script src="/static/js/incidentes.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/websocket.js"></script>
+    <script src="/static/js/app-superadmin.js"></script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Panel Vecino - SCZ Segura Predictiva</title>
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/mapa.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>SCZ Segura Predictiva</h1>
+        <p>Panel del Vecino - Santa Cruz, Bolivia</p>
+    </div>
+    
+    <div id="message" class="message"></div>
+    
+    <div class="navbar">
+        <div class="user-info">
+            <span>Bienvenido, <span id="user-name">Vecino</span></span>
+            <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+        <div class="nav-links">
+            <button onclick="mostrarPagina('reportar')">Reportar Incidente</button>
+            <button onclick="mostrarPagina('mis-reportes')">Mis Reportes</button>
+            <button onclick="mostrarPagina('mapa')">Mapa de Calor</button>
+            <button onclick="mostrarPagina('incidentes')">Incidentes</button>
+            <button onclick="mostrarPagina('perfil')">Mi Perfil</button>
+            <button onclick="mostrarPagina('alertas')">Mis Alertas</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div id="pagina-reportar" class="page active">
+            <div class="reporte-form">
+                <h2>Reportar Incidente</h2>
+                <div id="ubicacion-status" class="ubicacion-status"></div>
+                <div class="warning-message" style="background-color:#fff3cd;padding:10px;margin-bottom:15px;border-radius:5px;border:1px solid #ffc107;">
+                    <strong>Importante:</strong> Para reportar un incidente, debes obtener tu ubicacion actual.
+                </div>
+                <form id="reporteForm">
+                    <div class="form-group">
+                        <label>Tipo de Delito:</label>
+                        <select id="tipo_delito" required>
+                            <option value="">Seleccione un tipo</option>
+                            <option value="robo">Robo</option>
+                            <option value="asalto">Asalto</option>
+                            <option value="sospechoso">Persona Sospechosa</option>
+                            <option value="violencia">Violencia</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción:</label>
+                        <textarea id="descripcion" rows="3" placeholder="Describa lo sucedido..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Dirección (Calle/Avenida):</label>
+                        <input type="text" id="direccion" placeholder="Se obtendrá al obtener ubicacion" readonly>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" id="btn-obtener-ubicacion" style="background-color:#004d00;color:white;padding:10px;border:none;border-radius:5px;cursor:pointer;width:auto;">Obtener mi ubicacion actual</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Latitud:</label>
+                        <input type="text" id="latitud" readonly placeholder="Esperando ubicacion...">
+                    </div>
+                    <div class="form-group">
+                        <label>Longitud:</label>
+                        <input type="text" id="longitud" readonly placeholder="Esperando ubicacion...">
+                    </div>
+                    <div class="form-group">
+                        <label>Fotos del Incidente (maximo 3 fotos):</label>
+                        <input type="file" id="btn-tomar-foto" class="foto-input" accept="image/*" multiple>
+                        <small style="display:block;margin-top:6px;color:#666;">Toca para elegir fotos desde tu celular</small>
+                        <div id="preview_imagenes" class="preview-imagenes"></div>
+                    </div>
+                    <button type="submit" id="btn-reportar" disabled>Reportar Incidente</button>
+                </form>
+            </div>
+        </div>
+        
+        <div id="pagina-mis-reportes" class="page">
+            <h2>Mis Reportes</h2>
+            <div id="mis-incidentes-lista" class="incidentes-lista"></div>
+        </div>
+        
+        <div id="pagina-mapa" class="page">
+            <h2>Mapa de Calor de Incidentes</h2>
+            <div class="heatmap-control">
+                <div class="heatmap-legend">
+                    <div><span class="legend-color legend-rojo"></span> Alto</div>
+                    <div><span class="legend-color legend-naranja"></span> Medio-Alto</div>
+                    <div><span class="legend-color legend-amarillo"></span> Medio</div>
+                    <div><span class="legend-color legend-verde"></span> Bajo</div>
+                </div>
+            </div>
+            <div id="mapa" class="mapa-container"></div>
+            <h3>Incidentes Recientes</h3>
+            <div id="incidentes-preview" class="incidentes-lista"></div>
+        </div>
+        
+        <div id="pagina-incidentes" class="page">
+            <h2>Todos los Incidentes</h2>
+            <div id="incidentes-lista-completa" class="incidentes-lista"></div>
+        </div>
+        
+        <div id="pagina-perfil" class="page">
+            <h2>Mi Perfil</h2>
+            <div id="perfil-info" class="perfil-container"></div>
+            <div class="form-container">
+                <h3>Actualizar Perfil</h3>
+                <form id="actualizarPerfilForm">
+                    <div class="form-group">
+                        <label>Teléfono:</label>
+                        <input type="text" id="perfil_telefono">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono Emergencia:</label>
+                        <input type="text" id="perfil_telefono_emergencia">
+                    </div>
+                    <div class="form-group">
+                        <label>Cambiar Contraseña (opcional):</label>
+                        <input type="password" id="perfil_nueva_password" placeholder="Nueva contraseña">
+                    </div>
+                    <button type="submit">Actualizar Datos</button>
+                </form>
+            </div>
+        </div>
+        
+        <div id="pagina-alertas" class="page">
+            <h2>Mis Alertas Predictivas</h2>
+            <div id="alertas-lista" class="alertas-container"></div>
+            <div class="form-container">
+                <h3>Configurar Alertas</h3>
+                <div class="form-group">
+                    <label>Barrios de interés:</label>
+                    <select id="alertas_barrio" multiple>
+                        <option value="Plan 3000">Plan 3000</option>
+                        <option value="Los Lotes">Los Lotes</option>
+                        <option value="El Remanso">El Remanso</option>
+                        <option value="Villa 1° de Mayo">Villa 1° de Mayo</option>
+                        <option value="Palmar del Oratorio">Palmar del Oratorio</option>
+                        <option value="Zona Sur">Zona Sur</option>
+                        <option value="Centro">Centro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Horarios de interés:</label>
+                    <select id="alertas_horario" multiple>
+                        <option value="madrugada">00:00 - 06:00</option>
+                        <option value="manana">06:00 - 12:00</option>
+                        <option value="tarde">12:00 - 18:00</option>
+                        <option value="noche">18:00 - 00:00</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de delito:</label>
+                    <select id="alertas_delito" multiple>
+                        <option value="robo">Robo</option>
+                        <option value="asalto">Asalto</option>
+                        <option value="sospechoso">Persona Sospechosa</option>
+                        <option value="violencia">Violencia</option>
+                    </select>
+                </div>
+                <button onclick="guardarPreferenciasAlertas()">Guardar Preferencias</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-detalle" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModal()">&times;</span>
+            <div id="modal-contenido"></div>
+        </div>
+    </div>
+    
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/ui-vecino.js"></script>
+    <script src="/static/js/mapa.js"></script>
+    <script src="/static/js/incidentes.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/websocket.js"></script>
+    <script src="/static/js/app-vecino.js"></script>
+</body>
+</html>

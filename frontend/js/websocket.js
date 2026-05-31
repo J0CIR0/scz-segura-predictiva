@@ -17,7 +17,6 @@ function connectWebSocket() {
     ws = new WebSocket(wsUrl);
     
     ws.onopen = function() {
-        console.log('WebSocket conectado');
         if (wsReconnectInterval) {
             clearInterval(wsReconnectInterval);
             wsReconnectInterval = null;
@@ -28,12 +27,18 @@ function connectWebSocket() {
         try {
             const data = JSON.parse(event.data);
             if (data.type === 'session_expired') {
-                showMessage(data.data.message || 'Tu sesion fue cerrada porque iniciaste sesion en otro dispositivo', 'error');
+                showMessage(data.data.message || 'Tu sesion fue cerrada', 'error');
                 localStorage.removeItem('token');
                 localStorage.removeItem('userName');
                 localStorage.removeItem('userRol');
-                actualizarUIporSesion();
-                mostrarPagina('login');
+                localStorage.removeItem('userId');
+                window.location.href = '/';
+            }
+            if (data.type === 'nueva_alerta') {
+                showMessage(data.data.mensaje, 'success');
+                if (typeof cargarAlertas === 'function') {
+                    cargarAlertas();
+                }
             }
         } catch (e) {
             console.error('Error procesando mensaje WebSocket:', e);
@@ -45,7 +50,6 @@ function connectWebSocket() {
     };
     
     ws.onclose = function() {
-        console.log('WebSocket desconectado');
         if (!wsReconnectInterval) {
             wsReconnectInterval = setInterval(function() {
                 if (localStorage.getItem('token')) {

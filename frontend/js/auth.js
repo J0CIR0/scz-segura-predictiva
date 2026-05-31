@@ -69,13 +69,30 @@ async function loginUsuario(event) {
             if (result.status === 'success') {
                 localStorage.setItem('token', result.access_token);
                 localStorage.setItem('userName', result.nombre);
-                if (result.rol) localStorage.setItem('userRol', result.rol);
+                localStorage.setItem('userRol', result.rol);
+                localStorage.setItem('userId', result.id);
+                
                 disconnectWebSocket();
                 connectWebSocket();
-                actualizarUIporSesion();
-                mostrarPagina('mapa');
-                showMessage('Bienvenido', 'success');
-                document.getElementById('loginForm').reset();
+                
+                let redirectPage = '';
+                switch(result.rol) {
+                    case 'vecino':
+                        redirectPage = '/static/public/vecino.html';
+                        break;
+                    case 'admin_junta':
+                        redirectPage = '/static/public/admin-junta.html';
+                        break;
+                    case 'policia':
+                        redirectPage = '/static/public/policia.html';
+                        break;
+                    case 'superadmin':
+                        redirectPage = '/static/public/superadmin.html';
+                        break;
+                    default:
+                        redirectPage = '/';
+                }
+                window.location.href = redirectPage;
             } else {
                 showMessage('Error al iniciar sesion', 'error');
             }
@@ -129,11 +146,6 @@ async function cambiarContrasena(event) {
         if (response.ok) {
             showMessage(result.mensaje, 'success');
             document.getElementById('cambiarContrasenaForm').reset();
-            localStorage.removeItem('token');
-            localStorage.removeItem('userName');
-            localStorage.removeItem('userRol');
-            disconnectWebSocket();
-            actualizarUIporSesion();
             mostrarPagina('login');
         } else {
             showMessage(result.detail, 'error');
@@ -141,4 +153,22 @@ async function cambiarContrasena(event) {
     } catch (error) {
         showMessage('Error', 'error');
     }
+}
+
+async function cerrarSesion() {
+    const token = localStorage.getItem('token');
+    if (token) {
+        try {
+            await fetch('/api/logout', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+        } catch (error) {}
+    }
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userRol');
+    localStorage.removeItem('userId');
+    disconnectWebSocket();
+    window.location.href = '/';
 }

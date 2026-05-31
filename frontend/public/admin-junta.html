@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Panel Admin Junta - SCZ Segura Predictiva</title>
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/mapa.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>SCZ Segura Predictiva</h1>
+        <p>Panel Administrador de Junta Vecinal - Santa Cruz, Bolivia</p>
+    </div>
+    
+    <div id="message" class="message"></div>
+    
+    <div class="navbar">
+        <div class="user-info">
+            <span>Bienvenido, <span id="user-name">Administrador</span></span>
+            <span id="user-rol" class="user-rol">(Admin Junta)</span>
+            <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+        <div class="nav-links">
+            <button onclick="mostrarPagina('estadisticas')">Estadísticas</button>
+            <button onclick="mostrarPagina('validar')">Validar Incidentes</button>
+            <button onclick="mostrarPagina('incidentes-validados')">Incidentes Validados</button>
+            <button onclick="mostrarPagina('mapa')">Mapa de Calor</button>
+            <button onclick="mostrarPagina('reportes')">Generar Reporte PDF</button>
+            <button onclick="mostrarPagina('alertas-comunitarias')">Alertas Comunitarias</button>
+            <button onclick="mostrarPagina('perfil')">Mi Perfil</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div id="pagina-estadisticas" class="page active">
+            <h2>Estadísticas del Sistema</h2>
+            <div id="admin-stats"></div>
+            <h3>Incidentes por Tipo de Delito</h3>
+            <div id="admin-tipos-lista"></div>
+            <h3>Incidentes por Barrio</h3>
+            <div id="admin-barrios-lista"></div>
+            <h3>Tendencias Temporales</h3>
+            <div id="admin-tendencias-lista"></div>
+        </div>
+        
+        <div id="pagina-validar" class="page">
+            <h2>Incidentes por Validar</h2>
+            <div id="admin-incidentes-pendientes" class="incidentes-lista"></div>
+        </div>
+        
+        <div id="pagina-incidentes-validados" class="page">
+            <h2>Incidentes Validados</h2>
+            <div id="admin-incidentes-validados-lista" class="incidentes-lista"></div>
+        </div>
+        
+        <div id="pagina-mapa" class="page">
+            <h2>Mapa de Calor de Incidentes</h2>
+            <div class="heatmap-control">
+                <div class="heatmap-legend">
+                    <div><span class="legend-color legend-rojo"></span> Alto</div>
+                    <div><span class="legend-color legend-naranja"></span> Medio-Alto</div>
+                    <div><span class="legend-color legend-amarillo"></span> Medio</div>
+                    <div><span class="legend-color legend-verde"></span> Bajo</div>
+                </div>
+            </div>
+            <div id="mapa" class="mapa-container"></div>
+            <h3>Incidentes Recientes</h3>
+            <div id="incidentes-preview" class="incidentes-lista"></div>
+        </div>
+        
+        <div id="pagina-reportes" class="page">
+            <h2>Generar Reporte de Incidentes</h2>
+            <div class="form-container">
+                <div class="form-group">
+                    <label>Fecha Inicio:</label>
+                    <input type="date" id="reporte_fecha_inicio">
+                </div>
+                <div class="form-group">
+                    <label>Fecha Fin:</label>
+                    <input type="date" id="reporte_fecha_fin">
+                </div>
+                <div class="form-group">
+                    <label>Barrio:</label>
+                    <select id="reporte_barrio">
+                        <option value="">Todos</option>
+                        <option value="Plan 3000">Plan 3000</option>
+                        <option value="Los Lotes">Los Lotes</option>
+                        <option value="El Remanso">El Remanso</option>
+                        <option value="Villa 1° de Mayo">Villa 1° de Mayo</option>
+                        <option value="Palmar del Oratorio">Palmar del Oratorio</option>
+                        <option value="Zona Sur">Zona Sur</option>
+                        <option value="Centro">Centro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Reporte:</label>
+                    <select id="reporte_tipo">
+                        <option value="incidentes">Reporte de Incidentes</option>
+                        <option value="estadisticas">Reporte Estadístico</option>
+                        <option value="tendencias">Reporte de Tendencias</option>
+                    </select>
+                </div>
+                <button onclick="generarReportePDF()">Generar Reporte PDF</button>
+            </div>
+            <div id="reporte-preview" style="margin-top:20px;"></div>
+        </div>
+        
+        <div id="pagina-alertas-comunitarias" class="page">
+            <h2>Alertas Comunitarias</h2>
+            <div class="form-container">
+                <div class="form-group">
+                    <label>Mensaje de Alerta:</label>
+                    <textarea id="alerta_mensaje" rows="3" placeholder="Escriba el mensaje de alerta para la comunidad..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Barrio destino:</label>
+                    <select id="alerta_barrio">
+                        <option value="">Todos los barrios</option>
+                        <option value="Plan 3000">Plan 3000</option>
+                        <option value="Los Lotes">Los Lotes</option>
+                        <option value="El Remanso">El Remanso</option>
+                        <option value="Villa 1° de Mayo">Villa 1° de Mayo</option>
+                        <option value="Palmar del Oratorio">Palmar del Oratorio</option>
+                        <option value="Zona Sur">Zona Sur</option>
+                        <option value="Centro">Centro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nivel de Alerta:</label>
+                    <select id="alerta_nivel">
+                        <option value="informativa">Informativa</option>
+                        <option value="preventiva">Preventiva</option>
+                        <option value="urgente">Urgente</option>
+                        <option value="emergencia">Emergencia</option>
+                    </select>
+                </div>
+                <button onclick="enviarAlertaComunitaria()">Enviar Alerta a la Comunidad</button>
+            </div>
+            <h3>Alertas Enviadas Recientes</h3>
+            <div id="alertas-historial" class="incidentes-lista"></div>
+        </div>
+        
+        <div id="pagina-perfil" class="page">
+            <h2>Mi Perfil</h2>
+            <div id="perfil-info" class="perfil-container"></div>
+            <div class="form-container">
+                <h3>Actualizar Perfil</h3>
+                <form id="actualizarPerfilForm">
+                    <div class="form-group">
+                        <label>Teléfono:</label>
+                        <input type="text" id="perfil_telefono">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono Emergencia:</label>
+                        <input type="text" id="perfil_telefono_emergencia">
+                    </div>
+                    <div class="form-group">
+                        <label>Ubicación de Vivienda:</label>
+                        <input type="text" id="perfil_ubicacion_vivienda">
+                    </div>
+                    <div class="form-group">
+                        <label>Cambiar Contraseña (opcional):</label>
+                        <input type="password" id="perfil_nueva_password" placeholder="Nueva contraseña">
+                    </div>
+                    <button type="submit">Actualizar Datos</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-detalle" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModal()">&times;</span>
+            <div id="modal-contenido"></div>
+        </div>
+    </div>
+    
+    <div id="modal-validar" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModalValidar()">&times;</span>
+            <div id="modal-validar-contenido"></div>
+        </div>
+    </div>
+    
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/ui-admin-junta.js"></script>
+    <script src="/static/js/mapa.js"></script>
+    <script src="/static/js/incidentes.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/websocket.js"></script>
+    <script src="/static/js/app-admin-junta.js"></script>
+</body>
+</html>

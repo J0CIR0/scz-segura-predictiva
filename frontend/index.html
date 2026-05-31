@@ -20,22 +20,6 @@
     
     <div id="message" class="message"></div>
     
-    <div id="auth-nav" class="navbar" style="display: none;">
-        <div class="user-info">
-            <span>Bienvenido, <span id="user-name">Vecino</span></span>
-            <span id="user-rol" class="user-rol"></span>
-            <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
-        </div>
-        <div class="nav-links">
-            <button onclick="mostrarPagina('mapa')">Mapa de Calor</button>
-            <button onclick="mostrarPagina('incidentes')">Incidentes</button>
-            <button onclick="mostrarPagina('reportar')">Reportar</button>
-            <button onclick="mostrarPagina('mis-reportes')">Mis Reportes</button>
-            <button id="btn-admin" onclick="mostrarPagina('admin')" style="display: none;">Panel Admin</button>
-            <button id="btn-policia" onclick="mostrarPagina('policia')" style="display: none;">Panel Policia</button>
-        </div>
-    </div>
-    
     <div id="public-nav" class="navbar" style="display: flex;">
         <div class="nav-links">
             <button onclick="mostrarPagina('mapa')">Mapa de Calor</button>
@@ -64,60 +48,6 @@
         <div id="pagina-incidentes" class="page">
             <h2>Todos los Incidentes</h2>
             <div id="incidentes-lista-completa" class="incidentes-lista"></div>
-        </div>
-        
-        <div id="pagina-mis-reportes" class="page">
-            <h2>Mis Reportes</h2>
-            <div id="mis-incidentes-lista" class="incidentes-lista"></div>
-        </div>
-        
-        <div id="pagina-reportar" class="page">
-            <div class="reporte-form">
-                <h2>Reportar Incidente</h2>
-                <div id="ubicacion-status" class="ubicacion-status"></div>
-                <div class="warning-message" style="background-color:#fff3cd;padding:10px;margin-bottom:15px;border-radius:5px;border:1px solid #ffc107;">
-                    <strong>Importante:</strong> Para reportar un incidente, debes obtener tu ubicacion actual.
-                </div>
-                <form id="reporteForm">
-                    <div class="form-group">
-                        <label>Tipo de Delito:</label>
-                        <select id="tipo_delito" required>
-                            <option value="">Seleccione un tipo</option>
-                            <option value="robo">Robo</option>
-                            <option value="asalto">Asalto</option>
-                            <option value="sospechoso">Persona Sospechosa</option>
-                            <option value="violencia">Violencia</option>
-                            <option value="otro">Otro</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Descripción:</label>
-                        <textarea id="descripcion" rows="3" placeholder="Describa lo sucedido..." required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Dirección (Calle/Avenida):</label>
-                        <input type="text" id="direccion" placeholder="Se obtendrá al obtener ubicacion" readonly>
-                    </div>
-                    <div class="form-group">
-                        <button type="button" id="btn-obtener-ubicacion" style="background-color:#004d00;color:white;padding:10px;border:none;border-radius:5px;cursor:pointer;width:auto;">Obtener mi ubicacion actual</button>
-                    </div>
-                    <div class="form-group">
-                        <label>Latitud:</label>
-                        <input type="text" id="latitud" readonly placeholder="Esperando ubicacion...">
-                    </div>
-                    <div class="form-group">
-                        <label>Longitud:</label>
-                        <input type="text" id="longitud" readonly placeholder="Esperando ubicacion...">
-                    </div>
-                    <div class="form-group">
-                        <label>Fotos del Incidente (maximo 3 fotos):</label>
-                        <input type="file" id="btn-tomar-foto" class="foto-input" accept="image/*" multiple>
-                        <small style="display:block;margin-top:6px;color:#666;">Toca para elegir fotos desde tu celular, igual que en laptop. Puedes repetir hasta 3 veces.</small>
-                        <div id="preview_imagenes" class="preview-imagenes"></div>
-                    </div>
-                    <button type="submit" id="btn-reportar" disabled>Reportar Incidente</button>
-                </form>
-            </div>
         </div>
         
         <div id="pagina-login" class="page">
@@ -222,23 +152,6 @@
                 </form>
             </div>
         </div>
-        
-        <div id="pagina-admin" class="page">
-            <h2>Panel de Administración</h2>
-            <div id="admin-stats"></div>
-            <h3>Incidentes por Validar</h3>
-            <div id="admin-incidentes-lista" class="incidentes-lista"></div>
-            <h3>Usuarios del Sistema</h3>
-            <div id="admin-usuarios-lista"></div>
-        </div>
-        
-        <div id="pagina-policia" class="page">
-            <h2>Panel Policial</h2>
-            <h3>Mis Incidentes Asignados</h3>
-            <div id="policia-incidentes-asignados" class="incidentes-lista"></div>
-            <h3>Incidentes Pendientes por Asignar</h3>
-            <div id="policia-incidentes-pendientes" class="incidentes-lista"></div>
-        </div>
     </div>
     
     <div id="modal-detalle" class="modal">
@@ -249,10 +162,10 @@
     </div>
     
     <script src="/static/js/config.js"></script>
-    <script src="/static/js/ui.js"></script>
+    <script src="/static/js/ui-public.js"></script>
     <script src="/static/js/mapa.js"></script>
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/incidentes.js"></script>
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app-public.js"></script>
 </body>
 </html>
