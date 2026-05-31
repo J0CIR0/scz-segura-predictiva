@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     actualizarUIporSesion();
+    connectWebSocket();
     
     if (document.getElementById('mapa')) {
         setTimeout(function() {

@@ -84,11 +84,8 @@ function mostrarPagina(paginaId) {
     }
 
     if (paginaId === 'reportar') {
-        // Al mostrar la página de reportar, deshabilitar el botón hasta obtener ubicacion
         const btnReportar = document.getElementById('btn-reportar');
         if (btnReportar) btnReportar.disabled = true;
-
-        // Intentar obtener ubicacion automaticamente si la funcion está disponible
         setTimeout(() => {
             if (typeof obtenerUbicacionManual === 'function') {
                 obtenerUbicacionManual();
@@ -157,9 +154,17 @@ function actualizarUIporSesion() {
 }
 
 function cerrarSesion() {
+    const token = localStorage.getItem('token');
+    if (token) {
+        fetch('/api/logout', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        }).catch(console.error);
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('userName');
     localStorage.removeItem('userRol');
+    disconnectWebSocket();
     currentUserRol = null;
     actualizarUIporSesion();
     mostrarPagina('mapa');

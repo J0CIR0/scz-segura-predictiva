@@ -9,7 +9,6 @@ import mysql.connector
 
 router = APIRouter()
 
-
 def normalizar_imagenes_guardadas(valor):
     if not valor:
         return []
@@ -25,8 +24,6 @@ def normalizar_imagenes_guardadas(valor):
         except Exception:
             if valor.startswith("data:image"):
                 return [valor]
-
-            # Fallback for malformed/truncated JSON rows, e.g. '["data:image...'
             coincidencias = re.findall(r"data:image/[^\"'\s]+", valor)
             if coincidencias:
                 return coincidencias
@@ -37,7 +34,7 @@ def normalizar_imagenes_guardadas(valor):
 def reportar_incidente(
     incidente: reporte_incidente, 
     request: Request,
-    current_user: dict = Depends(auth_service.get_current_user)
+    current_user: dict = Depends(auth_service.get_current_user_with_session_check)
 ):
     usuario_id = current_user.get("id")
     
@@ -88,7 +85,7 @@ def reportar_incidente(
             conn.close()
 
 @router.get("/incidentes")
-def listar_incidentes(current_user: dict = Depends(auth_service.get_current_user)):
+def listar_incidentes(current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
     conn = db.get_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -139,7 +136,7 @@ def listar_incidentes_publicos():
     return {"incidentes": incidentes}
 
 @router.get("/mis-incidentes")
-def mis_incidentes(current_user: dict = Depends(auth_service.get_current_user)):
+def mis_incidentes(current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
     usuario_id = current_user.get("id")
     if not usuario_id:
         raise HTTPException(status_code=401, detail="usuario no autenticado")

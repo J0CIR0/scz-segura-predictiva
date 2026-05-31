@@ -18,7 +18,7 @@ def verificar_rol_admin_junta(current_user: dict):
     return True
 
 @router.get("/admin/incidentes-por-validar")
-def incidentes_por_validar(current_user: dict = Depends(auth_service.get_current_user)):
+def incidentes_por_validar(current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
     verificar_rol_admin_junta(current_user)
     
     conn = db.get_connection()
@@ -42,7 +42,7 @@ def incidentes_por_validar(current_user: dict = Depends(auth_service.get_current
     return {"incidentes": incidentes}
 
 @router.get("/admin/estadisticas-barrio")
-def estadisticas_barrio(current_user: dict = Depends(auth_service.get_current_user)):
+def estadisticas_barrio(current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
     verificar_rol_admin_junta(current_user)
     
     conn = db.get_connection()
@@ -77,7 +77,7 @@ def estadisticas_barrio(current_user: dict = Depends(auth_service.get_current_us
     }
 
 @router.get("/admin/incidentes-validados")
-def incidentes_validados(current_user: dict = Depends(auth_service.get_current_user)):
+def incidentes_validados(current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
     verificar_rol_admin_junta(current_user)
     
     conn = db.get_connection()
@@ -103,7 +103,7 @@ def incidentes_validados(current_user: dict = Depends(auth_service.get_current_u
     return {"incidentes": incidentes}
 
 @router.get("/superadmin/usuarios")
-def listar_usuarios(current_user: dict = Depends(auth_service.get_current_user)):
+def listar_usuarios(current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
     verificar_rol_superadmin(current_user)
     
     conn = db.get_connection()
@@ -123,7 +123,7 @@ def listar_usuarios(current_user: dict = Depends(auth_service.get_current_user))
     return {"usuarios": usuarios}
 
 @router.put("/superadmin/usuarios/{usuario_id}/rol")
-def cambiar_rol_usuario(usuario_id: int, nuevo_rol: str, current_user: dict = Depends(auth_service.get_current_user)):
+def cambiar_rol_usuario(usuario_id: int, nuevo_rol: str, current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
     verificar_rol_superadmin(current_user)
     
     if nuevo_rol not in ["vecino", "admin_junta", "policia", "superadmin"]:
@@ -144,7 +144,7 @@ def cambiar_rol_usuario(usuario_id: int, nuevo_rol: str, current_user: dict = De
     return {"mensaje": "rol actualizado exitosamente"}
 
 @router.delete("/superadmin/usuarios/{usuario_id}")
-def eliminar_usuario(usuario_id: int, current_user: dict = Depends(auth_service.get_current_user)):
+def eliminar_usuario(usuario_id: int, current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
     verificar_rol_superadmin(current_user)
     
     if current_user["id"] == usuario_id:

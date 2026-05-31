@@ -12,7 +12,7 @@ def verificar_rol_policia(current_user: dict):
     return True
 
 @router.get("/policia/incidentes-asignados")
-def incidentes_asignados(current_user: dict = Depends(auth_service.get_current_user)):
+def incidentes_asignados(current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
     verificar_rol_policia(current_user)
     
     conn = db.get_connection()
@@ -38,7 +38,7 @@ def incidentes_asignados(current_user: dict = Depends(auth_service.get_current_u
     return {"incidentes": incidentes}
 
 @router.get("/policia/incidentes-pendientes")
-def incidentes_pendientes(current_user: dict = Depends(auth_service.get_current_user)):
+def incidentes_pendientes(current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
     verificar_rol_policia(current_user)
     
     conn = db.get_connection()
@@ -63,7 +63,7 @@ def incidentes_pendientes(current_user: dict = Depends(auth_service.get_current_
     return {"incidentes": incidentes}
 
 @router.post("/policia/asignar-incidente/{incidente_id}")
-def asignar_incidente(incidente_id: int, current_user: dict = Depends(auth_service.get_current_user)):
+def asignar_incidente(incidente_id: int, current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
     verificar_rol_policia(current_user)
     
     conn = db.get_connection()
@@ -97,7 +97,7 @@ def asignar_incidente(incidente_id: int, current_user: dict = Depends(auth_servi
     return {"mensaje": "incidente asignado exitosamente"}
 
 @router.put("/policia/resolver-incidente/{incidente_id}")
-def resolver_incidente(incidente_id: int, observaciones: str = None, current_user: dict = Depends(auth_service.get_current_user)):
+def resolver_incidente(incidente_id: int, observaciones: str = None, current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
     verificar_rol_policia(current_user)
     
     conn = db.get_connection()
@@ -124,7 +124,7 @@ def resolver_incidente(incidente_id: int, observaciones: str = None, current_use
     return {"mensaje": "incidente resuelto exitosamente"}
 
 @router.put("/policia/rechazar-incidente/{incidente_id}")
-def rechazar_incidente(incidente_id: int, motivo: str, current_user: dict = Depends(auth_service.get_current_user)):
+def rechazar_incidente(incidente_id: int, motivo: str, current_user: dict = Depends(auth_service.get_current_user_with_session_check)):
     verificar_rol_policia(current_user)
     
     conn = db.get_connection()

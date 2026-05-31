@@ -17,6 +17,10 @@ class login_usuario(BaseModel):
     email: EmailStr
     password: str
 
+class force_login_request(BaseModel):
+    email: EmailStr
+    password: str
+    
 class verificar_codigo(BaseModel):
     email: EmailStr
     codigo: str

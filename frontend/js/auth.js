@@ -54,26 +54,31 @@ async function verificarCodigo(event) {
 
 async function loginUsuario(event) {
     event.preventDefault();
-    const data = {
-        email: document.getElementById('login_email').value,
-        password: document.getElementById('login_contrasena').value
-    };
+    const email = document.getElementById('login_email').value;
+    const password = document.getElementById('login_contrasena').value;
     
     try {
         const response = await fetch('/api/login', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
+            body: JSON.stringify({email: email, password: password})
         });
         const result = await response.json();
+        
         if (response.ok) {
-            localStorage.setItem('token', result.access_token);
-            localStorage.setItem('userName', result.nombre || data.email.split('@')[0]);
-            if (result.rol) localStorage.setItem('userRol', result.rol);
-            actualizarUIporSesion();
-            mostrarPagina('mapa');
-            showMessage('Bienvenido', 'success');
-            document.getElementById('loginForm').reset();
+            if (result.status === 'success') {
+                localStorage.setItem('token', result.access_token);
+                localStorage.setItem('userName', result.nombre);
+                if (result.rol) localStorage.setItem('userRol', result.rol);
+                disconnectWebSocket();
+                connectWebSocket();
+                actualizarUIporSesion();
+                mostrarPagina('mapa');
+                showMessage('Bienvenido', 'success');
+                document.getElementById('loginForm').reset();
+            } else {
+                showMessage('Error al iniciar sesion', 'error');
+            }
         } else {
             showMessage(result.detail, 'error');
         }
@@ -124,6 +129,12 @@ async function cambiarContrasena(event) {
         if (response.ok) {
             showMessage(result.mensaje, 'success');
             document.getElementById('cambiarContrasenaForm').reset();
+            localStorage.removeItem('token');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userRol');
+            disconnectWebSocket();
+            actualizarUIporSesion();
+            mostrarPagina('login');
         } else {
             showMessage(result.detail, 'error');
         }

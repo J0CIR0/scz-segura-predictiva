@@ -14,6 +14,8 @@ create table usuarios (
     contra varchar(255) not null,
     rol enum('vecino', 'admin_junta', 'policia', 'superadmin') not null default 'vecino',
     esta_verificado boolean default false,
+    activo boolean default false,
+    active_session_token varchar(255) null,
     codigo_verificacion varchar(6),
     token_recuperacion varchar(255) null,
     token_recuperacion_expiracion datetime null,
@@ -33,7 +35,7 @@ create table incidentes (
     latitud decimal(10,8) not null,
     longitud decimal(11,8) not null,
     direccion varchar(255),
-    imagenes text null,
+    imagenes longtext null,
     ubicacion_valida boolean default false,
     ip_address varchar(45) null,
     estado enum('pendiente', 'validado', 'rechazado', 'en_proceso', 'resuelto') default 'pendiente',
@@ -116,6 +118,3 @@ use scz_segura_predictiva;
 select * from incidentes;
 
 SET GLOBAL max_allowed_packet = 268435456;
-
-
-ALTER TABLE incidentes MODIFY COLUMN imagenes LONGTEXT NULL;
