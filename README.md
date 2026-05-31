@@ -55,6 +55,7 @@ scz_segura_predictiva/
 ------------auth_utils.py
 ------------email_utils.py
 ------------log_utils.py
+------------websocket_manager.py
 ----database/
 --------db.py
 ----frontend/
@@ -73,6 +74,7 @@ scz_segura_predictiva/
 ------------incidentes.js
 ------------mapa.js
 ------------ui.js
+------------websocket.js
 --------node_modules
 
 ## Instalacion
