@@ -21,7 +21,7 @@
     <div id="message" class="message"></div>
     
     <div class="navbar">
-        <button class="nav-toggle" aria-label="Abrir menú">☰</button>
+        <button class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
         <div id="navMenu" class="nav-menu">
             <div class="nav-links">
                 <button class="nav-btn" onclick="mostrarPagina('reportar')">Reportar</button>
@@ -200,16 +200,7 @@
     <script src="/static/js/incidentes.js"></script>
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/websocket.js"></script>
+    <script src="/static/js/panel-nav.js"></script>
     <script src="/static/js/app-vecino.js"></script>
-    <script>
-        (function(){
-            const toggle = document.querySelector('.nav-toggle');
-            const menu = document.getElementById('navMenu');
-            if(toggle && menu){
-                toggle.addEventListener('click', ()=> menu.classList.toggle('open'));
-                menu.querySelectorAll('.nav-btn').forEach(b=> b.addEventListener('click', ()=> menu.classList.remove('open')));
-            }
-        })();
-    </script>
 </body>
 </html>

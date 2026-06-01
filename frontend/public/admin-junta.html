@@ -20,19 +20,22 @@
     <div id="message" class="message"></div>
     
     <div class="navbar">
+        <button class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+        <div class="nav-menu" id="navMenu">
+            <div class="nav-links">
+                <button class="nav-btn" onclick="mostrarPagina('estadisticas')">Estadísticas</button>
+                <button class="nav-btn" onclick="mostrarPagina('validar')">Validar Incidentes</button>
+                <button class="nav-btn" onclick="mostrarPagina('incidentes-validados')">Incidentes Validados</button>
+                <button class="nav-btn" onclick="mostrarPagina('mapa')">Mapa de Calor</button>
+                <button class="nav-btn" onclick="mostrarPagina('reportes')">Generar Reporte PDF</button>
+                <button class="nav-btn" onclick="mostrarPagina('alertas-comunitarias')">Alertas Comunitarias</button>
+                <button class="nav-btn" onclick="mostrarPagina('perfil')">Mi Perfil</button>
+            </div>
+        </div>
         <div class="user-info">
             <span>Bienvenido, <span id="user-name">Administrador</span></span>
             <span id="user-rol" class="user-rol">(Admin Junta)</span>
             <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
-        </div>
-        <div class="nav-links">
-            <button onclick="mostrarPagina('estadisticas')">Estadísticas</button>
-            <button onclick="mostrarPagina('validar')">Validar Incidentes</button>
-            <button onclick="mostrarPagina('incidentes-validados')">Incidentes Validados</button>
-            <button onclick="mostrarPagina('mapa')">Mapa de Calor</button>
-            <button onclick="mostrarPagina('reportes')">Generar Reporte PDF</button>
-            <button onclick="mostrarPagina('alertas-comunitarias')">Alertas Comunitarias</button>
-            <button onclick="mostrarPagina('perfil')">Mi Perfil</button>
         </div>
     </div>
     
@@ -193,6 +196,7 @@
     <script src="/static/js/incidentes.js"></script>
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/websocket.js"></script>
+    <script src="/static/js/panel-nav.js"></script>
     <script src="/static/js/app-admin-junta.js"></script>
 </body>
 </html>

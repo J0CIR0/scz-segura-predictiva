@@ -20,19 +20,23 @@
     <div id="message" class="message"></div>
     
     <div class="navbar">
+        <button class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+        <div class="nav-menu" id="navMenu">
+            <div class="nav-links">
+                <button class="nav-btn" onclick="mostrarPagina('asignados')">Mis Incidentes Asignados</button>
+                <button class="nav-btn" onclick="mostrarPagina('pendientes')">Incidentes Pendientes</button>
+                <button class="nav-btn" onclick="mostrarPagina('mapa')">Mapa de Calor</button>
+                <button class="nav-btn" onclick="mostrarPagina('historial')">Historial Resueltos</button>
+                <button class="nav-btn" onclick="mostrarPagina('patrullajes')">Planificar Patrullaje</button>
+                <button class="nav-btn" onclick="mostrarPagina('perfil')">Mi Perfil</button>
+            </div>
+        </div>
+        <button class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
         <div class="user-info">
             <span>Bienvenido, <span id="user-name">Policía</span></span>
             <span id="user-rol" class="user-rol">(Policía)</span>
             <span id="user-placa" class="user-placa"></span>
             <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
-        </div>
-        <div class="nav-links">
-            <button onclick="mostrarPagina('asignados')">Mis Incidentes Asignados</button>
-            <button onclick="mostrarPagina('pendientes')">Incidentes Pendientes</button>
-            <button onclick="mostrarPagina('mapa')">Mapa de Calor</button>
-            <button onclick="mostrarPagina('historial')">Historial Resueltos</button>
-            <button onclick="mostrarPagina('patrullajes')">Planificar Patrullaje</button>
-            <button onclick="mostrarPagina('perfil')">Mi Perfil</button>
         </div>
     </div>
     
@@ -176,6 +180,7 @@
     <script src="/static/js/incidentes.js"></script>
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/websocket.js"></script>
+    <script src="/static/js/panel-nav.js"></script>
     <script src="/static/js/app-policia.js"></script>
 </body>
 </html>

@@ -21,19 +21,22 @@
     <div id="message" class="message"></div>
     
     <div class="navbar">
+        <button class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+        <div class="nav-menu" id="navMenu">
+            <div class="nav-links">
+                <button class="nav-btn" onclick="mostrarPagina('usuarios')">Gestionar Usuarios</button>
+                <button class="nav-btn" onclick="mostrarPagina('estadisticas')">Estadísticas Globales</button>
+                <button class="nav-btn" onclick="mostrarPagina('logs')">Logs de Auditoría</button>
+                <button class="nav-btn" onclick="mostrarPagina('configuracion')">Configuración Sistema</button>
+                <button class="nav-btn" onclick="mostrarPagina('respaldos')">Respaldos</button>
+                <button class="nav-btn" onclick="mostrarPagina('monitoreo')">Monitoreo</button>
+                <button class="nav-btn" onclick="mostrarPagina('perfil')">Mi Perfil</button>
+            </div>
+        </div>
         <div class="user-info">
             <span>Bienvenido, <span id="user-name">Superadmin</span></span>
             <span id="user-rol" class="user-rol">(Super Administrador)</span>
             <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
-        </div>
-        <div class="nav-links">
-            <button onclick="mostrarPagina('usuarios')">Gestionar Usuarios</button>
-            <button onclick="mostrarPagina('estadisticas')">Estadísticas Globales</button>
-            <button onclick="mostrarPagina('logs')">Logs de Auditoría</button>
-            <button onclick="mostrarPagina('configuracion')">Configuración Sistema</button>
-            <button onclick="mostrarPagina('respaldos')">Respaldos</button>
-            <button onclick="mostrarPagina('monitoreo')">Monitoreo</button>
-            <button onclick="mostrarPagina('perfil')">Mi Perfil</button>
         </div>
     </div>
     
@@ -254,6 +257,7 @@
     <script src="/static/js/incidentes.js"></script>
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/websocket.js"></script>
+    <script src="/static/js/panel-nav.js"></script>
     <script src="/static/js/app-superadmin.js"></script>
 </body>
 </html>
