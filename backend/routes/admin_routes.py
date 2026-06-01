@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, FileResponse, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional
