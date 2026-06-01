@@ -1,5 +1,318 @@
 # SCZ Segura Predictiva
 
+Proyecto de ejemplo: plataforma de reporte y gestión de incidentes para vecinos, policías y administradores (superadmin). Provee APIs REST en backend (FastAPI), una UI estática en el frontend (HTML/CSS/JS) y utilidades para respaldos, monitoreo y reentrenamiento de modelos simples de IA.
+
+---
+
+## Contenido del repositorio
+
+- `backend/` : Código del servidor FastAPI, rutas, esquemas y utilidades.
+- `frontend/` : Archivos estáticos (HTML, CSS, JS) para distintos paneles: vecino, policía, admin, superadmin.
+- `database/` : Conector y helpers para MySQL (`db.py`).
+- `db.sql` : Script SQL para crear la base de datos y tablas iniciales (esquema canónico).
+- `backend/scripts/` : Scripts para pruebas/integración y utilidades (por ejemplo `integration_tests.py`).
+- `backend/backups/` : Carpeta donde el servidor guarda respaldos creados por endpoints de superadmin.
+
+---
+
+## Resumen funcional
+
+El sistema soporta los siguientes flujos principales:
+
+- Registro, login y gestión de perfil de usuarios (vecinos, policía, admin_junta, superadmin).
+- Reporte de incidentes por vecinos (geolocalizados, con fotos y descripciones).
+- Visualización de incidentes en mapa (Leaflet + heatmap).
+- Flujo de trabajo para policías: asignación, resolución y registro de patrullajes.
+- Módulo `superadmin`: gestión completa de usuarios (listar/editar/cambiar roles/eliminar), configuración del sistema, generación y descarga de respaldos, logs de auditoría, monitoreo básico y endpoint para reentrenamiento de IA (dev/demo).
+- Auditoría: todas las acciones críticas se registran en `logs_sistema`.
+
+---
+
+## Tecnologías y para qué sirve cada una
+
+- Python 3.x: lenguaje principal del backend.
+- FastAPI: framework web asíncrono para construir las APIs REST.
+- Uvicorn: ASGI server para servir la app FastAPI en desarrollo.
+- MySQL: base de datos relacional (esquema en `db.sql`).
+- mysql-connector-python: driver para conectar con MySQL.
+- python-jose: manejo de JWT para autenticación y autorización.
+- passlib[bcrypt]: hashing seguro de contraseñas.
+- pydantic: validación y serialización de modelos/schemas.
+- requests: llamadas HTTP desde scripts y utilidades internas.
+- Leaflet.js + leaflet.heat: renderizado de mapas y heatmaps en el frontend.
+- HTML/CSS/Vanilla JS: frontend estático y lógica cliente.
+
+Extras (dev / utilidades):
+- `email-validator`: requerido por pydantic para `EmailStr`.
+- `bcrypt`: dependencia nativa para passlib/seguridad.
+
+---
+
+## Requisitos previos (local)
+
+- Python 3.10+ instalado.
+- MySQL o MariaDB funcionando (usuario con permisos para crear base y tablas).
+- Git (opcional) para clonar el repo.
+- Recomiendo crear y usar un entorno virtual (`venv`) para aislar dependencias.
+
+---
+
+## Variables de entorno importantes
+
+Configure estas variables antes de arrancar el servidor. Ejemplos para PowerShell:
+
+```powershell
+$env:SECRET_KEY = 'cambiar_por_una_secreta_larga'
+$env:DB_HOST = '127.0.0.1'
+$env:DB_PORT = '3306'
+$env:DB_USER = 'tu_usuario'
+$env:DB_PASSWORD = 'tu_password'
+$env:DB_NAME = 'scz_segura_predictiva'
+$env:ALLOW_DEV_TOKEN = '1' # (opcional) habilitar endpoint dev para generar tokens en pruebas
+```
+
+En Linux/macOS (bash):
+
+```bash
+export SECRET_KEY='cambiar_por_una_secreta_larga'
+export DB_HOST='127.0.0.1'
+export DB_PORT='3306'
+export DB_USER='tu_usuario'
+export DB_PASSWORD='tu_password'
+export DB_NAME='scz_segura_predictiva'
+export ALLOW_DEV_TOKEN=1
+```
+
+Nota: los nombres exactos de variables pueden variar si cambia la configuración en `backend/main.py`. Ajusta según sea necesario.
+
+---
+
+## Instalación (paso a paso)
+
+1. Clona el repositorio y entra al directorio del proyecto:
+
+```powershell
+git clone <repo-url>
+cd scz_segura_predictiva
+```
+
+2. Crea y activa un entorno virtual (Windows PowerShell):
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+En Linux/macOS:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+3. Instala dependencias básicas (recomendado):
+
+```bash
+pip install --upgrade pip
+pip install fastapi uvicorn mysql-connector-python python-jose[cryptography] passlib[bcrypt] pydantic[email] requests python-multipart email-validator bcrypt
+```
+
+4. (Opcional) si vas a ejecutar los scripts de integración, instala también:
+
+```bash
+pip install pytest httpx
+```
+
+5. Crea la base de datos y objetos usando `db.sql`:
+
+```sql
+-- En tu cliente MySQL
+CREATE DATABASE scz_segura_predictiva CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE scz_segura_predictiva;
+SOURCE db.sql;
+```
+
+Nota: Si tu usuario MySQL no tiene permisos para `CREATE DATABASE`, crea la base manualmente y luego ejecuta el contenido de `db.sql` sobre la base creada.
+
+6. Ajusta las variables de entorno descritas arriba.
+
+---
+
+## Arrancar la aplicación (desarrollo)
+
+Con el entorno virtual activado y variables configuradas:
+
+```bash
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+# o
+.venv\Scripts\python.exe -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+La API quedará accesible en `http://127.0.0.1:8000`.
+
+Frontend: puedes abrir los archivos HTML directamente desde `frontend/public/` en tu navegador o servirlos con un servidor estático simple (recomendado para evitar problemas con CORS/archivos):
+
+```bash
+cd frontend
+python -m http.server 8080
+# luego abrir http://127.0.0.1:8080/public/vecino.html (o la página que corresponda)
+```
+
+---
+
+## Instalar dependencias usando `requirements.txt`
+
+Si prefieres instalar todas las dependencias desde un archivo, usa el `requirements.txt` incluido:
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+Esto instalará las mismas versiones de paquetes usadas durante el desarrollo.
+
+---
+
+## Usar Docker
+
+El repositorio incluye un `Dockerfile` para crear una imagen del servicio backend. Antes de construir, asegúrate de que `requirements.txt` exista y de configurar las variables de entorno necesarias (por ejemplo `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `SECRET_KEY`).
+
+Construir la imagen:
+
+```bash
+docker build -t scz-segura-backend:latest .
+```
+
+Ejecutar el contenedor (conexión a una base MySQL externa):
+
+```bash
+docker run -e DB_HOST=host.docker.internal -e DB_USER=root -e DB_PASSWORD=tu_pass -e DB_NAME=scz_segura_predictiva -e SECRET_KEY='tu_clave' -p 8000:8000 scz-segura-backend:latest
+```
+
+Notas:
+- En Windows, `host.docker.internal` permite al contenedor localizar el host donde se ejecuta MySQL en desarrollo. En Linux quizá necesites usar la IP del host o usar `--network` junto a un contenedor de MySQL.
+- Para un entorno completo (MySQL + app) recomiendo crear un `docker-compose.yml` que orqueste ambos servicios. Puedo generarlo si quieres.
+
+### Usar Docker Compose (MySQL + App)
+
+Se incluyó un ejemplo `docker-compose.yml` que levanta un servicio MySQL y la aplicación.
+
+1. Copia/ajusta las variables sensibles en un archivo `.env` (misma carpeta) o modifica el `docker-compose.yml` para usar tus credenciales.
+
+Ejemplo mínimo de `.env`:
+
+```env
+DB_HOST=db
+DB_USER=appuser
+DB_PASSWORD=apppass
+DB_NAME=scz_segura_predictiva
+SECRET_KEY=una_clave_segura
+ALLOW_DEV_TOKEN=1
+```
+
+2. Construir y levantar los servicios:
+
+```bash
+docker-compose up --build -d
+```
+
+3. Ver logs:
+
+```bash
+docker-compose logs -f app
+```
+
+4. Parar y remover contenedores:
+
+```bash
+docker-compose down -v
+```
+
+Ejecutar las pruebas de integración desde el contenedor `app` (requiere que la app esté lista y que la base de datos acepte conexiones):
+
+```bash
+docker-compose exec app python backend/scripts/integration_tests.py
+```
+
+Notas:
+- Si MySQL tarda en inicializar, el contenedor `app` puede fallar al inicio. Usa reintentos o espera a que el puerto 3306 acepte conexiones antes de ejecutar pruebas.
+- Para producción no expongas credenciales en el archivo `docker-compose.yml`; usa secretos de Docker o un gestor de secretos.
+
+
+---
+
+## Endpoints principales (resumen)
+
+- Autenticación: `POST /api/login`, `POST /api/register`, `PUT /api/perfil`.
+- Incidentes: `POST /api/incidentes` (reporte), `GET /api/incidentes` (filtros), `GET /api/incidentes/{id}`.
+- Policía: rutas bajo `/api/policia/*` — listar asignados, pendientes, resolver, rechazar, patrullajes y recomendaciones.
+- Superadmin: rutas bajo `/api/superadmin/*` — listar usuarios, cambiar rol, editar, eliminar, respaldos (`/respaldo-manual`, `/respaldos`), logs (`/logs`), reentrenar IA (`/reentrenar-ia`), monitoreo (`/monitoreo`), configuración (`/configuracion`).
+- Dev: `POST /api/dev/generate-token` (si `ALLOW_DEV_TOKEN` habilitado) para tests locales rápidos.
+
+Consulta los archivos en `backend/routes/` para ver las rutas exactas y payloads esperados.
+
+---
+
+## Respaldo y restauración
+
+- El endpoint de superadmin genera archivos JSON (o dumps SQL, según implementación) en `backend/backups/` y registra metadatos en la tabla `respaldos_sistema`.
+- Para restaurar manualmente, revisa el archivo de respaldo y utiliza herramientas MySQL o scripts de restauración apropiados.
+
+---
+
+## Reentrenamiento de IA (demo)
+
+Hay un endpoint en `superadmin` que lanza un proceso de reentrenamiento simulado para el modelo de clasificación/recomendación usado por el proyecto. En producción esto debe reemplazarse por un pipeline reproducible (dataset, pipeline de features, evaluación y despliegue del artefacto).
+
+---
+
+## Logs y auditoría
+
+- Todas las operaciones críticas se registran en la tabla `logs_sistema` mediante `backend/utils/log_utils.py`.
+- Consulta `logs_sistema` para auditoría o depuración de acciones administrativas.
+
+---
+
+## Problemas comunes y soluciones rápidas
+
+- Error pydantic `EmailStr` → instala `email-validator`.
+- ImportError `FileResponse` → usar `from fastapi.responses import FileResponse`.
+- Problemas con `passlib`/`bcrypt` → asegurar que `bcrypt` esté instalado y que la versión de `passlib` sea compatible.
+- Errores al ejecutar scripts mientras `uvicorn` corre en la misma terminal → usar tareas o terminales separadas.
+- Si las rutas de backup o escritura fallan, verifica permisos de carpeta `backend/backups/`.
+
+---
+
+## Pruebas de integración (rápido)
+
+Se incluyen scripts en `backend/scripts/integration_tests.py` que realizan flujos básicos end-to-end (generación de token dev, listar usuarios, cambiar rol, crear respaldo, ejecutar flujo policial). Ejecuta con el entorno y servidor activos:
+
+```bash
+.venv\Scripts\python.exe backend/scripts/integration_tests.py
+```
+
+Revisa el script para ver qué variables espera y cómo consumir los endpoints.
+
+---
+
+## Siguientes pasos recomendados
+
+- Añadir un `requirements.txt` o `pyproject.toml` para controlar versiones exactas de dependencias.
+- Preparar `Dockerfile` y `docker-compose.yml` para facilitar despliegue y reproducibilidad (MySQL + app).
+- Implementar tests unitarios y CI (GitHub Actions) que ejecuten los scripts de integración contra una base temporal.
+- Hardenizar seguridad: secretos en vault/env manager, limitar privilegios DB, sanitizar uploads, protección CSRF y CORS según despliegue.
+
+---
+
+Si quieres, puedo:
+
+- Añadir un `requirements.txt` con las versiones usadas durante desarrollo.
+- Crear un `Dockerfile` y `docker-compose.yml` de ejemplo.
+- Generar un `README` traducido al inglés.
+
+Dime qué prefieres que haga a continuación.
+# SCZ Segura Predictiva
+
 Sistema de seguridad ciudadana con inteligencia artificial predictiva para Santa Cruz de la Sierra, Bolivia.
 
 ## Descripcion del Proyecto
