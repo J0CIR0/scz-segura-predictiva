@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from backend.schemas.auth_schemas import registro_usuario, login_usuario, verificar_codigo, solicitar_recuperacion, cambiar_contrasena, actualizar_perfil
 from backend.utils.auth_utils import auth_service
 from backend.utils.email_utils import email_service
+from backend.utils.log_utils import registrar_log
 from database.db import db
 from datetime import datetime, timedelta
 
@@ -21,12 +22,7 @@ def registrar_usuario(usuario: registro_usuario):
     password_hash = auth_service.hash_pass(usuario.password)
     codigo = email_service.generar_codigo()
     
-    if usuario.numero_placa:
-        rol = "policia"
-    elif usuario.ubicacion_vivienda:
-        rol = "admin_junta"
-    else:
-        rol = "vecino"
+    rol = "vecino"
     
     cursor.execute("""
         insert into usuarios (ci, nombre, apellido, email, telefono, contra, rol, codigo_verificacion,
@@ -172,22 +168,33 @@ def actualizar_perfil_usuario(datos: actualizar_perfil, current_user: dict = Dep
     
     campos = []
     valores = []
+    campos_log = {}
     
     if datos.telefono:
         campos.append("telefono = %s")
         valores.append(datos.telefono)
+        campos_log["telefono"] = datos.telefono
     if datos.numero_placa:
         campos.append("numero_placa = %s")
         valores.append(datos.numero_placa)
+        campos_log["numero_placa"] = datos.numero_placa
     if datos.ubicacion_vivienda:
         campos.append("ubicacion_vivienda = %s")
         valores.append(datos.ubicacion_vivienda)
+        campos_log["ubicacion_vivienda"] = datos.ubicacion_vivienda
     if datos.telefono_emergencia:
         campos.append("telefono_emergencia = %s")
         valores.append(datos.telefono_emergencia)
+        campos_log["telefono_emergencia"] = datos.telefono_emergencia
     if datos.direccion_puesto:
         campos.append("direccion_puesto = %s")
         valores.append(datos.direccion_puesto)
+        campos_log["direccion_puesto"] = datos.direccion_puesto
+    if datos.nueva_password:
+        nueva_password_hash = auth_service.hash_pass(datos.nueva_password)
+        campos.append("contra = %s")
+        valores.append(nueva_password_hash)
+        campos_log["nueva_password"] = True
     
     if not campos:
         cursor.close()
@@ -198,6 +205,14 @@ def actualizar_perfil_usuario(datos: actualizar_perfil, current_user: dict = Dep
     query = f"update usuarios set {', '.join(campos)} where id = %s"
     cursor.execute(query, valores)
     conn.commit()
+    
+    registrar_log(
+        current_user["id"],
+        "actualizar_perfil",
+        tabla_afectada="usuarios",
+        registro_id=current_user["id"],
+        datos_nuevos=campos_log,
+    )
     
     cursor.close()
     conn.close()

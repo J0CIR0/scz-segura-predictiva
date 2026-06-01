@@ -39,3 +39,4 @@ class actualizar_perfil(BaseModel):
     ubicacion_vivienda: Optional[str] = None
     telefono_emergencia: Optional[str] = None
     direccion_puesto: Optional[str] = None
+    nueva_password: Optional[str] = None
