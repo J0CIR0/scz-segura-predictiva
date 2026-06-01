@@ -111,6 +111,37 @@ def monitoreo(token):
     r.raise_for_status()
 
 
+def police_flows():
+    print('\n== police flows ==')
+    base = BASE
+    police_token = gen_token('luis@test.com')
+
+    r = requests.get(f"{base}/api/policia/incidentes-resueltos", headers={"Authorization": f"Bearer {police_token}"}, timeout=30)
+    print('incidentes-resueltos', r.status_code)
+    pretty(r.json())
+    r.raise_for_status()
+
+    r = requests.get(f"{base}/api/policia/recomendar-patrullaje?fecha=2026-06-01&hora_inicio=08:00&hora_fin=12:00", headers={"Authorization": f"Bearer {police_token}"}, timeout=30)
+    print('recomendar-patrullaje', r.status_code)
+    pretty(r.json())
+    r.raise_for_status()
+
+    r = requests.post(
+        f"{base}/api/policia/guardar-patrullaje",
+        headers={"Authorization": f"Bearer {police_token}"},
+        json={"fecha": "2026-06-02", "hora_inicio": "08:00", "hora_fin": "12:00", "zona": "Centro"},
+        timeout=30,
+    )
+    print('guardar-patrullaje', r.status_code)
+    pretty(r.json())
+    r.raise_for_status()
+
+    r = requests.get(f"{base}/api/policia/mis-patrullajes", headers={"Authorization": f"Bearer {police_token}"}, timeout=30)
+    print('mis-patrullajes', r.status_code)
+    pretty(r.json())
+    r.raise_for_status()
+
+
 def listar_logs(token):
     url = f"{BASE}/api/superadmin/logs"
     r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=30)
@@ -138,6 +169,7 @@ if __name__ == '__main__':
         reentrenar_ia(token)
         monitoreo(token)
         listar_logs(token)
+        police_flows()
         print('\n== tests completed successfully ==')
     except Exception as e:
         print('\n== error during tests ==')
