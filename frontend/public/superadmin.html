@@ -6,6 +6,7 @@
     <title>Panel Superadmin - SCZ Segura Predictiva</title>
     <link rel="stylesheet" href="/static/css/base.css">
     <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/superadmin.css">
     <link rel="stylesheet" href="/static/css/mapa.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -98,6 +99,10 @@
         
         <div id="pagina-configuracion" class="page">
             <h2>Configuración del Sistema</h2>
+            <div class="action-row">
+                <button onclick="cargarConfiguracionSistema()">Refrescar configuración</button>
+                <button onclick="reentrenarModeloIA()" class="secondary">Reentrenar IA</button>
+            </div>
             <div class="form-container">
                 <h3>Límites y Umbrales</h3>
                 <div class="form-group">
@@ -150,6 +155,11 @@
                     <input type="number" id="config_alertas_intervalo" value="6">
                     <button onclick="guardarConfiguracion('alertas_intervalo')">Guardar</button>
                 </div>
+                <div class="form-group">
+                    <label>Intervalo de respaldo automático (horas):</label>
+                    <input type="number" id="respaldo_intervalo" value="6">
+                    <button onclick="guardarConfiguracionRespaldo()">Guardar</button>
+                </div>
             </div>
         </div>
         
@@ -159,11 +169,7 @@
                 <div class="form-group">
                     <button onclick="realizarRespaldoManual()" style="background-color:#28a745;">Realizar Respaldo Manual</button>
                 </div>
-                <div class="form-group">
-                    <label>Programar respaldo automático cada (horas):</label>
-                    <input type="number" id="respaldo_intervalo" value="6">
-                    <button onclick="guardarConfiguracionRespaldo()">Guardar</button>
-                </div>
+                <div class="alert alert-warning">Los respaldos se almacenan en el servidor y también quedan registrados en el historial.</div>
             </div>
             <h3>Historial de Respaldos</h3>
             <div id="respaldos-lista"></div>

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import FileResponse
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -11,6 +11,8 @@ from backend.schemas.admin_schemas import cambiar_rol_solicitud, actualizar_usua
 from backend.utils.auth_utils import auth_service
 from backend.utils.log_utils import registrar_log
 from database.db import db
+import os
+import secrets
 
 router = APIRouter()
 
@@ -706,6 +708,36 @@ def monitoreo(current_user: dict = Depends(auth_service.get_current_user)):
             "uso_memoria": uso_memoria,
             "db_estado": "conectada",
         }
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# Dev helper: generar token directo para pruebas locales
+@router.post("/dev/generate-token")
+def dev_generate_token(payload: dict = Body(...)):
+    # Solo habilitado cuando ALLOW_DEV_TOKEN=1 en entorno
+    if os.getenv("ALLOW_DEV_TOKEN") != "1":
+        raise HTTPException(status_code=403, detail="dev tokens disabled")
+
+    email = payload.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="email requerido")
+
+    conn = db.get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT id, rol FROM usuarios WHERE email = %s", (email,))
+        usuario = cursor.fetchone()
+        if not usuario:
+            raise HTTPException(status_code=404, detail="usuario no encontrado")
+
+        token_val = secrets.token_urlsafe(24)
+        cursor.execute("UPDATE usuarios SET active_session_token = %s, activo = TRUE WHERE id = %s", (token_val, usuario["id"]))
+        conn.commit()
+
+        jwt_token = auth_service.create_full_token(user_id=usuario["id"], email=email, rol=usuario["rol"], session_token=token_val)
+        return {"access_token": jwt_token, "token_type": "bearer", "id": usuario["id"], "rol": usuario["rol"]}
     finally:
         cursor.close()
         conn.close()

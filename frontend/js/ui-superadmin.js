@@ -38,6 +38,10 @@ function mostrarPagina(paginaId) {
     if (paginaId === 'perfil') {
         cargarPerfilSuperadmin();
     }
+
+    if (paginaId === 'configuracion') {
+        cargarConfiguracionSistema();
+    }
 }
 
 async function cargarUsuarios() {
@@ -220,7 +224,7 @@ async function cargarEstadisticasGlobales() {
         const statsDiv = document.getElementById('superadmin-stats');
         if (statsDiv) {
             statsDiv.innerHTML = `
-                <div class="admin-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:30px;">
+                <div class="admin-stats-grid">
                     <div class="stat-card" style="background:white;padding:20px;border-radius:10px;text-align:center;border:1px solid #004d00;">
                         <h3>Total Usuarios</h3>
                         <p style="font-size:36px;color:#004d00;">${data.total_usuarios}</p>
@@ -271,6 +275,31 @@ async function cargarEstadisticasGlobales() {
                 `;
             });
             barriosDiv.innerHTML += '</div>';
+        }
+
+        const verificacionDiv = document.getElementById('superadmin-verificacion-usuarios');
+        if (verificacionDiv) {
+            const porcentaje = data.total_usuarios ? Math.round((data.usuarios_verificados / data.total_usuarios) * 100) : 0;
+            verificacionDiv.innerHTML = `
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <strong>${porcentaje}%</strong>
+                        <span>${data.usuarios_verificados} de ${data.total_usuarios} usuarios</span>
+                    </div>
+                    <div class="progress-bar"><span style="width:${porcentaje}%"></span></div>
+                </div>
+            `;
+        }
+
+        const rendimientoDiv = document.getElementById('superadmin-rendimiento');
+        if (rendimientoDiv) {
+            rendimientoDiv.innerHTML = `
+                <div class="metric-grid">
+                    <div class="metric-card"><span>Logs</span><strong>${data.total_logs}</strong></div>
+                    <div class="metric-card"><span>Incidentes pendientes</span><strong>${data.incidentes_pendientes}</strong></div>
+                    <div class="metric-card"><span>Incidentes resueltos</span><strong>${data.incidentes_resueltos}</strong></div>
+                </div>
+            `;
         }
         
     } catch (error) {
@@ -390,6 +419,10 @@ async function guardarConfiguracion(tipo) {
             valor = document.getElementById('config_alertas_intervalo')?.value;
             clave = 'alertas_intervalo_horas';
             break;
+        case 'respaldo_intervalo':
+            valor = document.getElementById('respaldo_intervalo')?.value;
+            clave = 'respaldo_intervalo_horas';
+            break;
     }
     
     try {
@@ -443,7 +476,7 @@ async function realizarRespaldoManual() {
         });
         const result = await response.json();
         if (response.ok) {
-            showMessage('Respaldo realizado exitosamente', 'success');
+            showMessage(`Respaldo realizado exitosamente: ${result.archivo || ''}`, 'success');
             cargarRespaldos();
         } else {
             showMessage(result.detail, 'error');
@@ -512,6 +545,47 @@ function guardarConfiguracionRespaldo() {
     const intervalo = document.getElementById('respaldo_intervalo')?.value;
     if (intervalo) {
         guardarConfiguracion('respaldo_intervalo');
+    }
+}
+
+async function cargarConfiguracionSistema() {
+    const token = localStorage.getItem('token');
+
+    try {
+        const response = await fetch('/api/superadmin/configuracion', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await response.json();
+        const configuracion = data.configuracion || {};
+
+        const mapa = {
+            limite_reportes_falsos: 'config_falsos_limite',
+            intentos_login_bloqueo: 'config_login_intentos',
+            radio_deteccion_duplicados: 'config_radio_duplicados',
+            tiempo_fusion_duplicados: 'config_tiempo_duplicados',
+            max_peticiones_segundo: 'config_max_peticiones',
+            max_tiempo_respuesta: 'config_max_tiempo_respuesta',
+            alertas_intervalo_horas: 'config_alertas_intervalo',
+            respaldo_intervalo_horas: 'respaldo_intervalo'
+        };
+
+        Object.entries(mapa).forEach(([clave, elementoId]) => {
+            const input = document.getElementById(elementoId);
+            if (input && configuracion[clave] !== undefined) {
+                input.value = configuracion[clave];
+            }
+        });
+
+        const iaPrecision = document.getElementById('ia_precision_actual');
+        const iaUltimo = document.getElementById('ia_ultimo_reentrenamiento');
+        if (iaPrecision && configuracion.ia_precision_actual !== undefined) {
+            iaPrecision.innerText = `${configuracion.ia_precision_actual}%`;
+        }
+        if (iaUltimo && configuracion.ia_ultimo_reentrenamiento !== undefined) {
+            iaUltimo.innerText = configuracion.ia_ultimo_reentrenamiento;
+        }
+    } catch (error) {
+        console.error('Error cargando configuración:', error);
     }
 }
 
@@ -622,6 +696,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     mostrarPagina('usuarios');
     connectWebSocket();
+
+    cargarConfiguracionSistema();
+    cargarRespaldos();
+    cargarMonitoreo();
     
     setInterval(function() {
         if (document.getElementById('pagina-monitoreo').classList.contains('active')) {
