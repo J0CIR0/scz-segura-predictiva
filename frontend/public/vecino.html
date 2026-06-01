@@ -6,6 +6,7 @@
     <title>Panel Vecino - SCZ Segura Predictiva</title>
     <link rel="stylesheet" href="/static/css/base.css">
     <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/vecino.css">
     <link rel="stylesheet" href="/static/css/mapa.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -20,67 +21,77 @@
     <div id="message" class="message"></div>
     
     <div class="navbar">
+        <button class="nav-toggle" aria-label="Abrir menú">☰</button>
+        <div id="navMenu" class="nav-menu">
+            <div class="nav-links">
+                <button class="nav-btn" onclick="mostrarPagina('reportar')">Reportar</button>
+                <button class="nav-btn" onclick="mostrarPagina('mis-reportes')">Mis Reportes</button>
+                <button class="nav-btn" onclick="mostrarPagina('mapa')">Mapa</button>
+                <button class="nav-btn" onclick="mostrarPagina('incidentes')">Incidentes</button>
+                <button class="nav-btn" onclick="mostrarPagina('perfil')">Perfil</button>
+                <button class="nav-btn" onclick="mostrarPagina('alertas')">Alertas</button>
+            </div>
+        </div>
         <div class="user-info">
             <span>Bienvenido, <span id="user-name">Vecino</span></span>
             <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
-        </div>
-        <div class="nav-links">
-            <button onclick="mostrarPagina('reportar')">Reportar Incidente</button>
-            <button onclick="mostrarPagina('mis-reportes')">Mis Reportes</button>
-            <button onclick="mostrarPagina('mapa')">Mapa de Calor</button>
-            <button onclick="mostrarPagina('incidentes')">Incidentes</button>
-            <button onclick="mostrarPagina('perfil')">Mi Perfil</button>
-            <button onclick="mostrarPagina('alertas')">Mis Alertas</button>
         </div>
     </div>
     
     <div class="container">
         <div id="pagina-reportar" class="page active">
-            <div class="reporte-form">
+            <div class="reporte-form card">
                 <h2>Reportar Incidente</h2>
                 <div id="ubicacion-status" class="ubicacion-status"></div>
-                <div class="warning-message" style="background-color:#fff3cd;padding:10px;margin-bottom:15px;border-radius:5px;border:1px solid #ffc107;">
-                    <strong>Importante:</strong> Para reportar un incidente, debes obtener tu ubicacion actual.
+                <div class="alert alert-warning">
+                    <strong>Importante:</strong> Para reportar un incidente, debes obtener tu ubicación actual.
                 </div>
                 <form id="reporteForm">
-                    <div class="form-group">
-                        <label>Tipo de Delito:</label>
-                        <select id="tipo_delito" required>
-                            <option value="">Seleccione un tipo</option>
-                            <option value="robo">Robo</option>
-                            <option value="asalto">Asalto</option>
-                            <option value="sospechoso">Persona Sospechosa</option>
-                            <option value="violencia">Violencia</option>
-                            <option value="otro">Otro</option>
-                        </select>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Tipo de Delito:</label>
+                            <select id="tipo_delito" required>
+                                <option value="">Seleccione un tipo</option>
+                                <option value="robo">Robo</option>
+                                <option value="asalto">Asalto</option>
+                                <option value="sospechoso">Persona Sospechosa</option>
+                                <option value="violencia">Violencia</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Dirección (Calle/Avenida):</label>
+                            <input type="text" id="direccion" placeholder="Se obtendrá al obtener ubicacion" readonly>
+                        </div>
+
+                        <div class="form-group full">
+                            <label>Descripción:</label>
+                            <textarea id="descripcion" rows="3" placeholder="Describa lo sucedido..." required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="button" id="btn-obtener-ubicacion" class="btn btn-ubicacion">Obtener mi ubicación actual</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Latitud:</label>
+                            <input type="text" id="latitud" readonly placeholder="Esperando ubicacion...">
+                        </div>
+                        <div class="form-group">
+                            <label>Longitud:</label>
+                            <input type="text" id="longitud" readonly placeholder="Esperando ubicacion...">
+                        </div>
+
+                        <div class="form-group full">
+                            <label>Fotos del Incidente (máximo 3 fotos):</label>
+                            <input type="file" id="btn-tomar-foto" class="foto-input" accept="image/*" multiple>
+                            <small class="muted-note">Toca para elegir fotos desde tu celular</small>
+                            <div id="preview_imagenes" class="preview-imagenes"></div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Descripción:</label>
-                        <textarea id="descripcion" rows="3" placeholder="Describa lo sucedido..." required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Dirección (Calle/Avenida):</label>
-                        <input type="text" id="direccion" placeholder="Se obtendrá al obtener ubicacion" readonly>
-                    </div>
-                    <div class="form-group">
-                        <button type="button" id="btn-obtener-ubicacion" style="background-color:#004d00;color:white;padding:10px;border:none;border-radius:5px;cursor:pointer;width:auto;">Obtener mi ubicacion actual</button>
-                    </div>
-                    <div class="form-group">
-                        <label>Latitud:</label>
-                        <input type="text" id="latitud" readonly placeholder="Esperando ubicacion...">
-                    </div>
-                    <div class="form-group">
-                        <label>Longitud:</label>
-                        <input type="text" id="longitud" readonly placeholder="Esperando ubicacion...">
-                    </div>
-                    <div class="form-group">
-                        <label>Fotos del Incidente (maximo 3 fotos):</label>
-                        <input type="file" id="btn-tomar-foto" class="foto-input" accept="image/*" multiple>
-                        <small style="display:block;margin-top:6px;color:#666;">Toca para elegir fotos desde tu celular</small>
-                        <div id="preview_imagenes" class="preview-imagenes"></div>
-                    </div>
-                    <button type="submit" id="btn-reportar" disabled>Reportar Incidente</button>
+                    <button type="submit" id="btn-reportar" class="btn btn-primary" disabled>Reportar Incidente</button>
                 </form>
+                <div class="hint">Revisa la ubicación y agrega fotos claras. Máximo 3 imágenes.</div>
             </div>
         </div>
         
@@ -111,63 +122,67 @@
         
         <div id="pagina-perfil" class="page">
             <h2>Mi Perfil</h2>
-            <div id="perfil-info" class="perfil-container"></div>
-            <div class="form-container">
-                <h3>Actualizar Perfil</h3>
-                <form id="actualizarPerfilForm">
-                    <div class="form-group">
-                        <label>Teléfono:</label>
-                        <input type="text" id="perfil_telefono">
-                    </div>
-                    <div class="form-group">
-                        <label>Teléfono Emergencia:</label>
-                        <input type="text" id="perfil_telefono_emergencia">
-                    </div>
-                    <div class="form-group">
-                        <label>Cambiar Contraseña (opcional):</label>
-                        <input type="password" id="perfil_nueva_password" placeholder="Nueva contraseña">
-                    </div>
-                    <button type="submit">Actualizar Datos</button>
-                </form>
+            <div class="two-col">
+                <div id="perfil-info" class="perfil-info card"></div>
+                <div class="form-container card">
+                    <h3>Actualizar Perfil</h3>
+                    <form id="actualizarPerfilForm">
+                        <div class="form-group">
+                            <label>Teléfono:</label>
+                            <input type="text" id="perfil_telefono">
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono Emergencia:</label>
+                            <input type="text" id="perfil_telefono_emergencia">
+                        </div>
+                        <div class="form-group">
+                            <label>Cambiar Contraseña (opcional):</label>
+                            <input type="password" id="perfil_nueva_password" placeholder="Nueva contraseña">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Actualizar Datos</button>
+                    </form>
+                </div>
             </div>
         </div>
         
         <div id="pagina-alertas" class="page">
             <h2>Mis Alertas Predictivas</h2>
-            <div id="alertas-lista" class="alertas-container"></div>
-            <div class="form-container">
-                <h3>Configurar Alertas</h3>
-                <div class="form-group">
-                    <label>Barrios de interés:</label>
-                    <select id="alertas_barrio" multiple>
-                        <option value="Plan 3000">Plan 3000</option>
-                        <option value="Los Lotes">Los Lotes</option>
-                        <option value="El Remanso">El Remanso</option>
-                        <option value="Villa 1° de Mayo">Villa 1° de Mayo</option>
-                        <option value="Palmar del Oratorio">Palmar del Oratorio</option>
-                        <option value="Zona Sur">Zona Sur</option>
-                        <option value="Centro">Centro</option>
-                    </select>
+            <div class="two-col">
+                <div id="alertas-lista" class="alertas-container"></div>
+                <div class="form-container card">
+                    <h3>Configurar Alertas</h3>
+                    <div class="form-group">
+                        <label>Barrios de interés:</label>
+                        <select id="alertas_barrio" multiple>
+                            <option value="Plan 3000">Plan 3000</option>
+                            <option value="Los Lotes">Los Lotes</option>
+                            <option value="El Remanso">El Remanso</option>
+                            <option value="Villa 1° de Mayo">Villa 1° de Mayo</option>
+                            <option value="Palmar del Oratorio">Palmar del Oratorio</option>
+                            <option value="Zona Sur">Zona Sur</option>
+                            <option value="Centro">Centro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Horarios de interés:</label>
+                        <select id="alertas_horario" multiple>
+                            <option value="madrugada">00:00 - 06:00</option>
+                            <option value="manana">06:00 - 12:00</option>
+                            <option value="tarde">12:00 - 18:00</option>
+                            <option value="noche">18:00 - 00:00</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de delito:</label>
+                        <select id="alertas_delito" multiple>
+                            <option value="robo">Robo</option>
+                            <option value="asalto">Asalto</option>
+                            <option value="sospechoso">Persona Sospechosa</option>
+                            <option value="violencia">Violencia</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="guardarPreferenciasAlertas()">Guardar Preferencias</button>
                 </div>
-                <div class="form-group">
-                    <label>Horarios de interés:</label>
-                    <select id="alertas_horario" multiple>
-                        <option value="madrugada">00:00 - 06:00</option>
-                        <option value="manana">06:00 - 12:00</option>
-                        <option value="tarde">12:00 - 18:00</option>
-                        <option value="noche">18:00 - 00:00</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Tipo de delito:</label>
-                    <select id="alertas_delito" multiple>
-                        <option value="robo">Robo</option>
-                        <option value="asalto">Asalto</option>
-                        <option value="sospechoso">Persona Sospechosa</option>
-                        <option value="violencia">Violencia</option>
-                    </select>
-                </div>
-                <button onclick="guardarPreferenciasAlertas()">Guardar Preferencias</button>
             </div>
         </div>
     </div>
@@ -186,5 +201,15 @@
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/websocket.js"></script>
     <script src="/static/js/app-vecino.js"></script>
+    <script>
+        (function(){
+            const toggle = document.querySelector('.nav-toggle');
+            const menu = document.getElementById('navMenu');
+            if(toggle && menu){
+                toggle.addEventListener('click', ()=> menu.classList.toggle('open'));
+                menu.querySelectorAll('.nav-btn').forEach(b=> b.addEventListener('click', ()=> menu.classList.remove('open')));
+            }
+        })();
+    </script>
 </body>
 </html>

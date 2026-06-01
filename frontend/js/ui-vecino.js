@@ -1,4 +1,3 @@
-// frontend/js/ui-vecino.js
 function showMessage(text, type) {
     const msgDiv = document.getElementById('message');
     if (!msgDiv) return;

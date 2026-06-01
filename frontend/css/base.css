@@ -1,3 +1,11 @@
+:root{
+    --brand-green: #004d00;
+    --accent-green: #00cc66;
+    --bg: #f5f5f5;
+    --muted: #666666;
+    --danger: #dc3545;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -6,38 +14,57 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5f5;
-    color: #004d00;
+    background-color: var(--bg);
+    color: var(--brand-green);
+    -webkit-font-smoothing: antialiased;
 }
 
 .header {
-    background-color: #004d00;
+    background-color: var(--brand-green);
     color: white;
-    padding: 15px 20px;
+    padding: 16px 20px;
     text-align: center;
     position: sticky;
     top: 0;
     z-index: 100;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
 .header h1 {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
+    letter-spacing: 0.4px;
 }
 
 .header p {
-    font-size: 0.8rem;
-    opacity: 0.9;
+    font-size: 0.85rem;
+    opacity: 0.95;
 }
 
 .container {
     max-width: 1200px;
-    margin: 0 auto;
+    margin: 20px auto;
     padding: 20px;
+}
+
+:root{ font-size: 16px; }
+
+body { font-size: 15px; }
+
+/* slightly narrower central container for better whitespace */
+.container { max-width: 1000px; }
+
+/* make pages look like cards */
+.page {
+    background: white;
+    padding: 18px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 @media (max-width: 768px) {
     .container {
-        padding: 15px;
+        padding: 12px;
+        margin: 12px;
     }
     
     .header h1 {

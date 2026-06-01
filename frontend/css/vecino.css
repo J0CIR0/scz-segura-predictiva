@@ -1,0 +1,98 @@
+/* Estilos específicos para el panel de Vecino - minimalista y responsive */
+/* Usa las variables definidas en base.css */
+
+/* Layout y contenedores */
+.container { padding-bottom: 32px; }
+
+.page { padding: 22px; }
+
+.two-col { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items:start; }
+@media (max-width: 900px){ .two-col { grid-template-columns: 1fr; } }
+
+/* Header / Navbar refinements */
+.navbar { padding: 12px 20px; align-items:center; gap:12px; }
+.nav-toggle{ border-color: rgba(0,77,0,0.06); }
+.nav-menu.open { animation: slideIn .18s ease; }
+@keyframes slideIn{ from{opacity:0; transform: translateY(-6px);} to{opacity:1; transform: none;} }
+
+/* Reportar: formulario con separación y estructura clara */
+.reporte-form { max-width: 920px; }
+.reporte-form .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.reporte-form .form-grid .form-group{ margin-bottom:0; }
+.reporte-form .form-grid .full { grid-column: 1 / -1; }
+@media (max-width: 700px){ .reporte-form .form-grid { grid-template-columns: 1fr; } }
+
+.ubicacion-status{ margin-bottom:12px; font-size:14px; color:var(--muted); }
+.alert{ display:flex; gap:10px; align-items:center; }
+
+/* Form helpers */
+.field-inline{ display:flex; gap:8px; align-items:center; }
+.help-text{ font-size:13px; color:rgba(0,0,0,0.45); }
+
+/* Botones importantes */
+.btn-ubicacion{ background: linear-gradient(180deg,var(--accent-green), var(--brand-green)); box-shadow: 0 8px 20px rgba(0,77,0,0.08); }
+#btn-reportar{ margin-top:10px; box-shadow: 0 10px 30px rgba(0,77,0,0.06); }
+
+/* Preview de imagenes más elegante */
+.preview-imagenes { grid-template-columns: repeat(auto-fill,minmax(120px,1fr)); }
+.preview-imagenes img{ height:96px; object-fit:cover; border-radius:10px; }
+
+/* Mis reportes / incidentes */
+.incidentes-lista{ gap:18px; }
+.alertas-container{ display:grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap:14px; align-items:start; min-height:160px; }
+
+/* Force more obvious, spacious form controls inside reporte-form */
+.reporte-form label{ display:block; margin-bottom:10px; font-size:14px; color:var(--brand-green); }
+.reporte-form input[type="text"], .reporte-form select, .reporte-form textarea, .reporte-form input[type="file"]{ width:100% !important; padding:14px 16px !important; border-radius:14px !important; border:1px solid rgba(0,0,0,0.06) !important; box-shadow:none !important; font-size:15px; }
+.reporte-form textarea{ min-height:120px; }
+.reporte-form input[readonly]{ background:#fafafa; }
+
+/* Multiple selects (alertas) should be taller and readable */
+select[multiple], .form-container select[multiple], .reporte-form select[multiple]{ min-height:120px; padding:8px; }
+
+/* File input: make block and full width */
+.reporte-form input[type="file"]{ height:auto; padding:10px 12px; }
+
+/* Alerts list placeholder when empty */
+#alertas-lista:empty::before, #mis-incidentes-lista:empty::before{ content: 'No hay alertas/elementos por mostrar.'; color: rgba(0,0,0,0.45); display:block; padding:18px; }
+
+/* Increase two-col gap for breathing room */
+.two-col{ gap:28px; }
+
+/* Perfil empty state */
+.perfil-info:empty::before{ content: 'Sin información de perfil aún.'; color: rgba(0,0,0,0.45); display:block; padding:18px; }
+
+/* Increase visual separation inside cards */
+.card{ padding:20px; }
+.incidente-card{ padding:16px; border-radius:12px; }
+.incidente-titulo{ font-size:16px; }
+
+/* Perfil */
+.perfil-container{ gap:18px; }
+.perfil-info{ padding:18px; }
+.perfil-info .avatar{ width:84px; height:84px; border-radius:12px; background:linear-gradient(180deg, rgba(0,77,0,0.08), rgba(0,77,0,0.04)); display:inline-block; }
+.perfil-info .name{ font-weight:800; font-size:18px; margin-top:8px; }
+
+/* Alertas */
+.alertas-container{ margin-top:6px; }
+.alert-card{ display:flex; flex-direction:column; gap:8px; }
+.alert-card small{ color:var(--muted); }
+
+/* Modal refinements */
+.modal-content{ padding:18px; border-radius:14px; }
+
+/* Accessibility helpers */
+.sr-only{ position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden; }
+
+/* Small footer hint */
+.page .hint{ margin-top:12px; font-size:13px; color:rgba(0,0,0,0.45); }
+
+/* Utility spacing */
+.mb-6{ margin-bottom:6px; }
+.mb-12{ margin-bottom:12px; }
+
+/* final responsive polish */
+@media (max-width:480px){
+    .preview-imagenes img{ height:84px; }
+    .perfil-info .avatar{ width:64px; height:64px; }
+}
