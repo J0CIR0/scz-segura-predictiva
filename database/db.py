@@ -10,6 +10,7 @@ load_dotenv(dotenv_path=env_path)
 class Database:
     def __init__(self):
         self.host = os.getenv("DB_HOST")
+        self.port = int(os.getenv("DB_PORT", "3306"))
         self.user = os.getenv("DB_USER")
         self.password = os.getenv("DB_PASSWORD")
         self.database = os.getenv("DB_NAME")
@@ -21,8 +22,9 @@ class Database:
             self.pool = pooling.MySQLConnectionPool(
                 pool_name="mypool",
                 pool_size=10,
-                pool_reset_session=True,
+                pool_reset_session=False,
                 host=self.host,
+                port=self.port,
                 user=self.user,
                 password=self.password,
                 database=self.database,
@@ -36,6 +38,19 @@ class Database:
     def get_connection(self):
         if self.pool is None:
             self._create_pool()
-        return self.pool.get_connection()
+        try:
+            return self.pool.get_connection()
+        except Exception as e:
+            print(f"Error obteniendo conexion del pool: {e}. Reintentando crear pool.")
+            self._create_pool()
+            return self.pool.get_connection()
+
+    def safe_close(self, connection):
+        if connection is None:
+            return
+        try:
+            connection.close()
+        except Exception as e:
+            print(f"Conexion descartada sin cierre limpio: {e}")
 
 db = Database()

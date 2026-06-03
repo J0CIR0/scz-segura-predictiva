@@ -36,11 +36,14 @@ def registrar_usuario(usuario: registro_usuario):
     cursor.close()
     conn.close()
     
-    email_service.enviar_email(usuario.email, "verifica tu cuenta - scz segura predictiva", f"""
-    <h2>bienvenido a scz segura predictiva</h2>
-    <p>tu codigo de verificacion es: <strong>{codigo}</strong></p>
-    <p>este codigo expira en 15 minutos.</p>
-    """)
+    try:
+        email_service.enviar_email(usuario.email, "Verifica tu cuenta - SCZ Segura Predictiva", f"""
+        <h2>Bienvenido a SCZ Segura Predictiva</h2>
+        <p>Tu codigo de verificacion es: <strong>{codigo}</strong></p>
+        <p>Este codigo expira en 15 minutos.</p>
+        """)
+    except Exception as e:
+        print(f"No se pudo enviar el email: {e}")
     
     return {"mensaje": "usuario registrado. revisa tu correo"}
 
@@ -258,11 +261,14 @@ def solicitar_recuperacion(data: solicitar_recuperacion):
     cursor.close()
     conn.close()
     
-    email_service.enviar_email(data.email, "recupera tu contraseña - scz segura predictiva", f"""
-    <h2>recuperacion de contraseña</h2>
-    <p>tu codigo de recuperacion es: <strong>{codigo}</strong></p>
-    <p>este codigo expira en 15 minutos.</p>
-    """)
+    try:
+        email_service.enviar_email(data.email, "Recupera tu contraseña - SCZ Segura Predictiva", f"""
+        <h2>Recuperacion de contraseña</h2>
+        <p>Tu codigo de recuperacion es: <strong>{codigo}</strong></p>
+        <p>Este codigo expira en 15 minutos.</p>
+        """)
+    except Exception as e:
+        print(f"No se pudo enviar el email: {e}")
     
     return {"mensaje": "codigo de recuperacion enviado a tu correo"}
 

@@ -115,6 +115,8 @@ select id, nombre, email, rol from usuarios;
 
 use scz_segura_predictiva;
 select * from usuarios;
+select * from incidentes;
+DELETE FROM usuarios WHERE id = 6;
 
 SET GLOBAL max_allowed_packet = 268435456;
 ALTER TABLE usuarios ADD COLUMN active_session_token VARCHAR(255) NULL;
